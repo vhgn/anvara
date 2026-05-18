@@ -1,4 +1,3 @@
-
 import { getCampaigns } from '@/lib/api';
 import { CampaignCard } from './campaign-card';
 
@@ -10,7 +9,7 @@ export async function CampaignList(props: { sponsorId: string }) {
   const campaigns = await getCampaigns(props.sponsorId);
 
   // if (loading) {
-  //   return 
+  //   return
   // }
   //
   // if (error) {

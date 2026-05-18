@@ -27,9 +27,9 @@ export default async function SponsorDashboard() {
         {/* TODO: Add CreateCampaignButton here */}
       </div>
 
-      <Suspense fallback={
-        <div className="py-8 text-center text-[--color-muted]">Loading campaigns...</div>
-      }>
+      <Suspense
+        fallback={<div className="py-8 text-center text-[--color-muted]">Loading campaigns...</div>}
+      >
         <CampaignList sponsorId={roleData.sponsorId} />
       </Suspense>
     </div>
