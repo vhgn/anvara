@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { AdSlotGrid } from './components/ad-slot-grid';
 
 // FIXME: This page fetches all ad slots client-side. Consider:
@@ -14,7 +15,13 @@ export default function MarketplacePage() {
         {/* TODO: Add search input and filter controls */}
       </div>
 
-      <AdSlotGrid />
+      <Suspense
+        fallback={
+          <div className="py-12 text-center text-[--color-muted]">Loading marketplace...</div>
+        }
+      >
+        <AdSlotGrid />
+      </Suspense>
     </div>
   );
 }
