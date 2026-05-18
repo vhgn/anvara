@@ -21,10 +21,32 @@ export function validate<TValidator extends RouteValidator<any, any, any>>(
   z.output<TValidator['query']>,
   any
 > {
-  return (req, _res, next) => {
-    req.body = validator.body ? validator.body.parse(req.body) : req.body;
-    req.params = validator.params ? validator.params.parse(req.params) : req.params;
-    req.query = validator.query ? validator.query.parse(req.query) : req.query;
-    next();
+  return (req, res, next) => {
+    try {
+      Object.defineProperties(req, {
+        body: {
+          value: validator.body ? validator.body.parse(req.body) : req.body,
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        },
+        query: {
+          value: validator.query ? validator.query.parse(req.query) : req.query,
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        },
+        params: {
+          value: validator.params ? validator.params.parse(req.params) : req.params,
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        }
+      })
+      next();
+    } catch (e) {
+      console.error("Failed to validate", e)
+      res.status(400).json({ error: String(e) })
+    }
   };
 }
