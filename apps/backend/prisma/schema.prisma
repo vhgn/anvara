@@ -5,6 +5,12 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
+generator zod {
+  provider = "prisma-zod-generator"
+  output   = "../src/generated/zod"
+  mode     = "full"
+}
+
 datasource db {
   provider = "postgresql"
 }
