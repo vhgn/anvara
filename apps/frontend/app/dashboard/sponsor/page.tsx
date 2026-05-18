@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { getUserRole } from '@/lib/auth-helpers';
 import { CampaignList } from './components/campaign-list';
+import { Suspense } from 'react';
 
 export default async function SponsorDashboard() {
   const session = await auth.api.getSession({
@@ -15,7 +16,7 @@ export default async function SponsorDashboard() {
 
   // Verify user has 'sponsor' role
   const roleData = await getUserRole(session.user.id);
-  if (roleData.role !== 'sponsor') {
+  if (roleData.role !== 'sponsor' || !roleData.sponsorId) {
     redirect('/');
   }
 
@@ -26,7 +27,11 @@ export default async function SponsorDashboard() {
         {/* TODO: Add CreateCampaignButton here */}
       </div>
 
-      <CampaignList />
+      <Suspense fallback={
+        <div className="py-8 text-center text-[--color-muted]">Loading campaigns...</div>
+      }>
+        <CampaignList sponsorId={roleData.sponsorId} />
+      </Suspense>
     </div>
   );
 }
