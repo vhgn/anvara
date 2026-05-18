@@ -1,15 +1,22 @@
 import { type Request, type Response, type NextFunction } from 'express';
 
-// TODO: Add sponsorId and publisherId to the user interface
-// These are needed to scope queries to the user's own data
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: 'SPONSOR' | 'PUBLISHER';
-    // FIXME: Missing sponsorId and publisherId fields
-  };
-}
+export type User =
+  | {
+      id: string;
+      email: string;
+      role: 'SPONSOR';
+      sponsorId: string;
+    }
+  | {
+      id: string;
+      email: string;
+      role: 'PUBLISHER';
+      publisherId: string;
+    };
+
+type Locals = {
+  user?: User;
+};
 
 // TODO: This middleware doesn't actually validate anything!
 // It should:
@@ -18,15 +25,28 @@ export interface AuthRequest extends Request {
 // 3. Look up the user in the database
 // 4. Attach user info to req.user
 // 5. Return 401 if invalid
-export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function authMiddleware(
+  _req: Request,
+  res: Response<any, Locals>,
+  next: NextFunction
+) {
   // Better Auth will handle validation via headers
   // This is a placeholder for protected routes
+
+  // FIXME: real implementation
+  res.locals.user = {
+    id: 'abcd',
+    email: 'test@example.com',
+    role: 'SPONSOR',
+    sponsorId: 'sp123',
+  };
+
   next();
 }
 
 export function roleMiddleware(allowedRoles: Array<'SPONSOR' | 'PUBLISHER'>) {
-  return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
+  return (_req: Request, res: Response<any, Locals>, next: NextFunction): void => {
+    if (!res.locals.user || !allowedRoles.includes(res.locals.user.role)) {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;
     }

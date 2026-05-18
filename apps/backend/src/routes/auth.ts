@@ -2,6 +2,7 @@ import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import { validate } from '../validate.js';
 import z from 'zod';
+import { authMiddleware } from '../auth.js';
 
 const router: IRouter = Router();
 
@@ -17,7 +18,7 @@ router.post('/login', async (_req, res) => {
 });
 
 // GET /api/auth/me - Get current user (for API clients)
-router.get('/me', async (req, res) => {
+router.get('/me', authMiddleware, async (req, res) => {
   // TODO: Challenge 3 - Implement auth middleware to validate session
   // For now, return unauthorized
   res.status(401).json({ error: 'Not authenticated' });
