@@ -1,6 +1,5 @@
 import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
-import { getParam } from '../utils/helpers.js';
 import { PlacementInputSchema, PlacementStatusSchema } from '../generated/zod/schemas/index.js';
 import { validate } from '../validate.js';
 import z from 'zod';
@@ -23,8 +22,8 @@ router.get(
 
       const placements = await prisma.placement.findMany({
         where: {
-          ...(campaignId && { campaignId: getParam(campaignId) }),
-          ...(publisherId && { publisherId: getParam(publisherId) }),
+          ...(campaignId && { campaignId }),
+          ...(publisherId && { publisherId }),
           ...(status && {
             status,
           }),
@@ -57,8 +56,10 @@ router.post(
       publisherId: true,
       agreedPrice: true,
       pricingModel: true,
-      startDate: true,
-      endDate: true,
+    }).extend({
+      pricingModel: PlacementInputSchema.shape.pricingModel.default("CPM"),
+      startDate: z.coerce.date(),
+      endDate: z.coerce.date(),
     }),
   }),
   async (req, res) => {
@@ -81,9 +82,9 @@ router.post(
           adSlotId,
           publisherId,
           agreedPrice,
-          pricingModel: pricingModel || 'CPM',
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
+          pricingModel,
+          startDate,
+          endDate,
         },
         include: {
           campaign: { select: { name: true } },

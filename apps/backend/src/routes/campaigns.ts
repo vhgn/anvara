@@ -1,10 +1,8 @@
-import { Router, type Request, type Response, type IRouter } from 'express';
+import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
-import { getParam } from '../utils/helpers.js';
 import { validate } from '../validate.js';
 import z from 'zod';
 import {
-  CampaignCreateOneSchema,
   CampaignInputSchema,
   CampaignStatusSchema,
 } from '../generated/zod/schemas/index.js';
@@ -81,11 +79,13 @@ router.post(
       budget: true,
       cpmRate: true,
       cpcRate: true,
-      startDate: true,
-      endDate: true,
-      targetCategories: true,
       targetRegions: true,
       sponsorId: true,
+    }).extend({
+      startDate: z.coerce.date(),
+      endDate: z.coerce.date(),
+      targetCategories: CampaignInputSchema.shape.targetCategories.default([]),
+      targetRegions: CampaignInputSchema.shape.targetRegions.default([]),
     }),
   }),
   async (req, res) => {
@@ -110,10 +110,10 @@ router.post(
           budget,
           cpmRate,
           cpcRate,
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
-          targetCategories: targetCategories || [],
-          targetRegions: targetRegions || [],
+          startDate,
+          endDate,
+          targetCategories,
+          targetRegions,
           sponsorId,
         },
         include: {

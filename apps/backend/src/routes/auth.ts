@@ -1,4 +1,4 @@
-import { Router, type Request, type Response, type IRouter } from 'express';
+import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import { validate } from '../validate.js';
 import z from 'zod';
