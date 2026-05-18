@@ -13,7 +13,12 @@ export async function api<T>(endpoint: string, options?: RequestInit): Promise<T
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     ...options,
   });
-  if (!res.ok) throw new Error('API request failed');
+
+  if (!res.ok) {
+    const { error } = await res.json().catch((e) => ({ error: 'Failed to parse error' }));
+    throw new Error(error);
+  }
+
   return res.json();
 }
 
