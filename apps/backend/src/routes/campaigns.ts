@@ -1,37 +1,50 @@
 import { Router, type Request, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import { getParam } from '../utils/helpers.js';
+import { validate } from '../validate.js';
+import z from 'zod';
+import {
+  CampaignCreateOneSchema,
+  CampaignInputSchema,
+  CampaignStatusSchema,
+} from '../generated/zod/schemas/index.js';
 
 const router: IRouter = Router();
 
 // GET /api/campaigns - List all campaigns
-router.get('/', async (req: Request, res: Response) => {
-  try {
-    const { status, sponsorId } = req.query;
+router.get(
+  '/',
+  validate({
+    query: z.object({ status: CampaignStatusSchema.optional(), sponsorId: z.string().optional() }),
+  }),
+  async (req, res) => {
+    try {
+      const { status, sponsorId } = req.query;
 
-    const campaigns = await prisma.campaign.findMany({
-      where: {
-        ...(status && { status: status as string as 'ACTIVE' | 'PAUSED' | 'COMPLETED' }),
-        ...(sponsorId && { sponsorId: getParam(sponsorId) }),
-      },
-      include: {
-        sponsor: { select: { id: true, name: true, logo: true } },
-        _count: { select: { creatives: true, placements: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+      const campaigns = await prisma.campaign.findMany({
+        where: {
+          ...(status && { status: status }),
+          ...(sponsorId && { sponsorId }),
+        },
+        include: {
+          sponsor: { select: { id: true, name: true, logo: true } },
+          _count: { select: { creatives: true, placements: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
 
-    res.json(campaigns);
-  } catch (error) {
-    console.error('Error fetching campaigns:', error);
-    res.status(500).json({ error: 'Failed to fetch campaigns' });
+      res.json(campaigns);
+    } catch (error) {
+      console.error('Error fetching campaigns:', error);
+      res.status(500).json({ error: 'Failed to fetch campaigns' });
+    }
   }
-});
+);
 
 // GET /api/campaigns/:id - Get single campaign with details
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', validate({ params: z.object({ id: z.string() }) }), async (req, res) => {
   try {
-    const id = getParam(req.params.id);
+    const { id } = req.params;
     const campaign = await prisma.campaign.findUnique({
       where: { id },
       include: {
@@ -59,52 +72,62 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/campaigns - Create new campaign
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const {
-      name,
-      description,
-      budget,
-      cpmRate,
-      cpcRate,
-      startDate,
-      endDate,
-      targetCategories,
-      targetRegions,
-      sponsorId,
-    } = req.body;
-
-    if (!name || !budget || !startDate || !endDate || !sponsorId) {
-      res.status(400).json({
-        error: 'Name, budget, startDate, endDate, and sponsorId are required',
-      });
-      return;
-    }
-
-    const campaign = await prisma.campaign.create({
-      data: {
+router.post(
+  '/',
+  validate({
+    body: CampaignInputSchema.pick({
+      name: true,
+      description: true,
+      budget: true,
+      cpmRate: true,
+      cpcRate: true,
+      startDate: true,
+      endDate: true,
+      targetCategories: true,
+      targetRegions: true,
+      sponsorId: true,
+    }),
+  }),
+  async (req, res) => {
+    try {
+      const {
         name,
         description,
         budget,
         cpmRate,
         cpcRate,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        targetCategories: targetCategories || [],
-        targetRegions: targetRegions || [],
+        startDate,
+        endDate,
+        targetCategories,
+        targetRegions,
         sponsorId,
-      },
-      include: {
-        sponsor: { select: { id: true, name: true } },
-      },
-    });
+      } = req.body;
 
-    res.status(201).json(campaign);
-  } catch (error) {
-    console.error('Error creating campaign:', error);
-    res.status(500).json({ error: 'Failed to create campaign' });
+      const campaign = await prisma.campaign.create({
+        data: {
+          name,
+          description,
+          budget,
+          cpmRate,
+          cpcRate,
+          startDate: new Date(startDate),
+          endDate: new Date(endDate),
+          targetCategories: targetCategories || [],
+          targetRegions: targetRegions || [],
+          sponsorId,
+        },
+        include: {
+          sponsor: { select: { id: true, name: true } },
+        },
+      });
+
+      res.status(201).json(campaign);
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+      res.status(500).json({ error: 'Failed to create campaign' });
+    }
   }
-});
+);
 
 // TODO: Add PUT /api/campaigns/:id endpoint
 // Update campaign details (name, budget, dates, status, etc.)

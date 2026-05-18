@@ -1,11 +1,13 @@
 import { Router, type Request, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import { getParam } from '../utils/helpers.js';
+import z from 'zod';
+import { validate } from '../validate.js';
 
 const router: IRouter = Router();
 
 // GET /api/publishers - List all publishers
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (_req, res) => {
   try {
     const publishers = await prisma.publisher.findMany({
       include: {
@@ -23,9 +25,9 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 // GET /api/publishers/:id - Get single publisher with ad slots
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', validate({ params: z.object({ id: z.string() }) }), async (req, res) => {
   try {
-    const id = getParam(req.params.id);
+    const { id } = req.params;
     const publisher = await prisma.publisher.findUnique({
       where: { id },
       include: {
