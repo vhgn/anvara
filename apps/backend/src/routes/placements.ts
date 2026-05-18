@@ -57,7 +57,7 @@ router.post(
       agreedPrice: true,
       pricingModel: true,
     }).extend({
-      pricingModel: PlacementInputSchema.shape.pricingModel.default("CPM"),
+      pricingModel: PlacementInputSchema.shape.pricingModel.default('CPM'),
       startDate: z.coerce.date(),
       endDate: z.coerce.date(),
     }),

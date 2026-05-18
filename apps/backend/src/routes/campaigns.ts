@@ -2,10 +2,7 @@ import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import { validate } from '../validate.js';
 import z from 'zod';
-import {
-  CampaignInputSchema,
-  CampaignStatusSchema,
-} from '../generated/zod/schemas/index.js';
+import { CampaignInputSchema, CampaignStatusSchema } from '../generated/zod/schemas/index.js';
 
 const router: IRouter = Router();
 

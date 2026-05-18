@@ -41,12 +41,12 @@ export function validate<TValidator extends RouteValidator<any, any, any>>(
           writable: true,
           configurable: true,
           enumerable: true,
-        }
-      })
+        },
+      });
       next();
     } catch (e) {
-      console.error("Failed to validate", e)
-      res.status(400).json({ error: String(e) })
+      console.error('Failed to validate', e);
+      res.status(400).json({ error: String(e) });
     }
   };
 }
