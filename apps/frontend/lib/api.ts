@@ -1,6 +1,6 @@
 // Simple API client
-// FIXME: This client has no error response parsing - when API returns { error: "..." },
-// we should extract and throw that message instead of generic "API request failed"
+
+import { logger } from "./utils";
 
 // TODO: Add authentication token to requests
 // Hint: Include credentials: 'include' for cookie-based auth, or
@@ -16,7 +16,10 @@ export async function api<T>(endpoint: string, options?: RequestInit): Promise<T
   });
 
   if (!res.ok) {
-    const { error } = await res.json().catch((e) => ({ error: 'Failed to parse error' }));
+    const { error } = await res.json().catch((e) => {
+      logger.error(e)
+      return { error: 'Failed to parse error' }
+    });
     throw new Error(error);
   }
 

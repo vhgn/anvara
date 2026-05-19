@@ -56,13 +56,16 @@ export function deepClone<T>(obj: T): T {
 export const logger = {
   log: (...args: unknown[]) => {
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.log('[App]', ...args);
     }
   },
   error: (...args: unknown[]) => {
+    // eslint-disable-next-line no-console
     console.error('[App Error]', ...args);
   },
   warn: (...args: unknown[]) => {
+    // eslint-disable-next-line no-console
     console.warn('[App Warning]', ...args);
   },
 };
