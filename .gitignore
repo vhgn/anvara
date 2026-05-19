@@ -7,7 +7,7 @@ node_modules/
 **/dist/
 **/build/
 **/out/
-/apps/frontend/*.tsbuildinfo
+**/*.tsbuildinfo
 
 # Environment
 .env
