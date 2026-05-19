@@ -1,48 +1,79 @@
-import { describe, it, expect } from 'vitest';
+import express from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import authRoutes from './routes/auth.js';
 
-// BONUS: Implement unit tests for API endpoints
-// You'll need to install supertest: pnpm add -D supertest @types/supertest
+const getSession = vi.hoisted(() => vi.fn());
+const sponsorFindUnique = vi.hoisted(() => vi.fn());
+const publisherFindUnique = vi.hoisted(() => vi.fn());
 
-describe('Sponsorships API', () => {
-  // BONUS: Implement these tests
+vi.mock('better-auth', () => ({
+  betterAuth: () => ({ api: { getSession } }),
+}));
 
-  describe('GET /api/sponsorships', () => {
-    it.todo('returns an array of sponsorships');
-    // Example:
-    // it('returns an array of sponsorships', async () => {
-    //   const response = await request(app).get('/api/sponsorships');
-    //   expect(response.status).toBe(200);
-    //   expect(Array.isArray(response.body)).toBe(true);
-    // });
+vi.mock('better-auth/adapters/prisma', () => ({
+  prismaAdapter: () => ({}),
+}));
 
-    it.todo('sponsorships have required fields');
+vi.mock('better-auth/node', () => ({
+  fromNodeHeaders: (headers: unknown) => headers,
+}));
+
+vi.mock('./db.js', () => ({
+  prisma: {
+    sponsor: { findUnique: sponsorFindUnique },
+    publisher: { findUnique: publisherFindUnique },
+  },
+}));
+
+const app = express();
+app.use(express.json());
+app.use('/api/auth', authRoutes);
+
+describe('Auth API', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe('GET /api/sponsorships/:id', () => {
-    it.todo('returns a single sponsorship by ID');
+  it('keeps login on frontend', async () => {
+    const res = await request(app).post('/api/auth/login');
 
-    it.todo('returns 404 for non-existent sponsorship');
+    expect(res.status).toBe(400);
   });
 
-  describe('POST /api/sponsorships', () => {
-    it.todo('creates a new sponsorship');
+  it('rejects /me without session', async () => {
+    getSession.mockResolvedValue(null);
 
-    it.todo('returns 400 for missing required fields');
+    const res = await request(app).get('/api/auth/me');
+
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ error: 'Unauthenticated' });
   });
 
-  describe('PUT /api/sponsorships/:id', () => {
-    it.todo('updates an existing sponsorship');
+  it('rejects /me when user has no role', async () => {
+    getSession.mockResolvedValue({ user: { id: 'user-1', email: 'a@b.com' } });
+    sponsorFindUnique.mockResolvedValue(null);
+    publisherFindUnique.mockResolvedValue(null);
 
-    it.todo('returns 404 for non-existent sponsorship');
+    const res = await request(app).get('/api/auth/me');
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Role not identified' });
   });
 
-  describe('GET /api/health', () => {
-    it.todo('returns health status');
-    // Example:
-    // it('returns health status', async () => {
-    //   const response = await request(app).get('/api/health');
-    //   expect(response.status).toBe(200);
-    //   expect(response.body.status).toBe('ok');
-    // });
+  it('returns sponsor user from /me', async () => {
+    getSession.mockResolvedValue({ user: { id: 'user-1', email: 'sponsor@example.com' } });
+    sponsorFindUnique.mockResolvedValue({ id: 'sponsor-1', name: 'Sponsor' });
+    publisherFindUnique.mockResolvedValue(null);
+
+    const res = await request(app).get('/api/auth/me');
+
+    expect(res.status).toBe(200);
+    expect(res.body.user).toMatchObject({
+      id: 'user-1',
+      email: 'sponsor@example.com',
+      role: 'SPONSOR',
+      sponsorId: 'sponsor-1',
+    });
   });
 });

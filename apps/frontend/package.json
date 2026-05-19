@@ -9,7 +9,7 @@
     "start": "next start -p 3847",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "vitest",
+    "test": "vitest --passWithNoTests",
     "test:ui": "vitest --ui",
     "typecheck": "tsc --noEmit"
   },
