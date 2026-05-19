@@ -30,7 +30,7 @@ export default async function SponsorDashboard() {
       <Suspense
         fallback={<div className="py-8 text-center text-[--color-muted]">Loading campaigns...</div>}
       >
-        <CampaignList sponsorId={roleData.sponsorId!} />
+        <CampaignList sponsorId={roleData.sponsorId} />
       </Suspense>
     </div>
   );
