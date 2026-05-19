@@ -1,13 +1,27 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291';
 
-export type UserRole = 'sponsor' | 'publisher' | null;
+export type RoleData =
+  | {
+      role: 'sponsor';
+      sponsorId: string;
+      name: string;
 
-export interface RoleData {
-  role: UserRole;
-  sponsorId?: string;
-  publisherId?: string;
-  name?: string;
-}
+      publisherId?: undefined;
+    }
+  | {
+      role: 'publisher';
+      publisherId: string;
+      name: string;
+
+      sponsorId?: undefined;
+    }
+  | {
+      role: null;
+
+      name?: undefined;
+      sponsorId?: undefined;
+      publisherId?: undefined;
+    };
 
 /**
  * Fetch user role from the backend based on userId.
