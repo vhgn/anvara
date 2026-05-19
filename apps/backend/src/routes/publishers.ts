@@ -1,6 +1,5 @@
-import { Router, type Request, type Response, type IRouter } from 'express';
+import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
-import { getParam } from '../utils/helpers.js';
 import z from 'zod';
 import { validate } from '../validate.js';
 

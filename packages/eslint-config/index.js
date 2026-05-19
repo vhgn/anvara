@@ -7,7 +7,13 @@ import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
 
 export const ignores = {
-  ignores: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**'],
+  ignores: [
+    '**/node_modules/**',
+    '**/dist/**',
+    '**/build/**',
+    '**/.next/**',
+    '**/src/generated/**',
+  ],
 };
 
 export const baseConfig = [
@@ -24,6 +30,7 @@ export const baseConfig = [
       globals: {
         ...globals.node,
         ...globals.es2022,
+        NodeJS: 'readonly',
       },
     },
     plugins: {
@@ -57,6 +64,7 @@ export const reactConfig = [
         ...globals.browser,
         ...globals.es2022,
         ...globals.node,
+        NodeJS: 'readonly',
       },
     },
     plugins: {
