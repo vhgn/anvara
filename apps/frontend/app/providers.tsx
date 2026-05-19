@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import { isServer, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren, Suspense } from 'react';
@@ -25,5 +25,9 @@ function getQueryClient() {
 }
 
 export function Providers(props: PropsWithChildren) {
-  return <QueryClientProvider client={getQueryClient()}><Suspense>{props.children}</Suspense></QueryClientProvider>;
+  return (
+    <QueryClientProvider client={getQueryClient()}>
+      <Suspense>{props.children}</Suspense>
+    </QueryClientProvider>
+  );
 }

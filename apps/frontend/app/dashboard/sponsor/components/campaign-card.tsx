@@ -1,5 +1,3 @@
-'use client';
-
 interface CampaignCardProps {
   campaign: {
     id: string;

@@ -1,20 +1,20 @@
 import { getCampaigns } from '@/lib/api';
 import { CampaignCard } from './campaign-card';
 
-// FIXME: This component fetches data client-side - should use Server Components
-// See Challenge 2 in CHALLENGES.md for proper implementation
 export async function CampaignList(props: { sponsorId: string }) {
   // TODO: Add refetch on tab focus for better UX
   // TODO: Add optimistic updates when creating/editing campaigns
-  const campaigns = await getCampaigns(props.sponsorId);
+  let campaigns;
 
-  // if (loading) {
-  //   return
-  // }
-  //
-  // if (error) {
-  //   return <div className="rounded border border-red-200 bg-red-50 p-4 text-red-600">{error}</div>;
-  // }
+  try {
+    campaigns = await getCampaigns(props.sponsorId);
+  } catch {
+    return (
+      <div className="rounded border border-red-200 bg-red-50 p-4 text-red-600">
+        Failed to load campaigns
+      </div>
+    );
+  }
 
   if (campaigns.length === 0) {
     return (

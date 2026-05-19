@@ -1,30 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { authClient } from '@/auth-client';
-
-type UserRole = 'sponsor' | 'publisher' | null;
+import { getUserRole } from '@/lib/auth-helpers';
 
 export function Nav() {
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
-  const [role, setRole] = useState<UserRole>(null);
-
-  // TODO: Convert to server component and fetch role server-side
-  // Fetch user role from backend when user is logged in
-  useEffect(() => {
-    if (user?.id) {
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/${user.id}`
-      )
-        .then((res) => res.json())
-        .then((data) => setRole(data.role))
-        .catch(() => setRole(null));
-    } else {
-      setRole(null);
-    }
-  }, [user?.id]);
+  const { data: roleData } = useQuery({
+    queryKey: ['user-role', user?.id],
+    queryFn: () => getUserRole(user!.id),
+    enabled: Boolean(user?.id),
+  });
+  const role = roleData?.role ?? null;
 
   // TODO: Add active link styling using usePathname() from next/navigation
   // The current page's link should be highlighted differently

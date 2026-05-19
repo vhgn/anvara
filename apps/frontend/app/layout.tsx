@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Nav } from './components/nav';
 import { Providers } from './providers';
-import { Suspense } from 'react';
+import type { ReactNode } from 'react';
 
 // TODO: Add ErrorBoundary wrapper for graceful error handling
 // TODO: Consider adding a loading.tsx for Suspense boundaries
@@ -16,17 +16,17 @@ export const metadata: Metadata = {
   // Missing: openGraph, twitter, icons, viewport, etc.
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   // HINT: If using React Query, you would wrap children with QueryClientProvider here
   // See: https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr
   return (
-    <Providers>
-      <html lang="en">
-        <body className="min-h-screen antialiased">
+    <html lang="en">
+      <body className="min-h-screen antialiased">
+        <Providers>
           <Nav />
           <main className="mx-auto max-w-6xl p-4">{children}</main>
-        </body>
-      </html>
-    </Providers>
+        </Providers>
+      </body>
+    </html>
   );
 }

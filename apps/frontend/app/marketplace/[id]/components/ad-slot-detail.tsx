@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { getAdSlot } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, getAdSlot } from '@/lib/api';
 import { authClient } from '@/auth-client';
+import { getUserRole } from '@/lib/auth-helpers';
 
 interface AdSlot {
   id: string;
@@ -25,13 +27,6 @@ interface User {
   email: string;
 }
 
-interface RoleInfo {
-  role: 'sponsor' | 'publisher' | null;
-  sponsorId?: string;
-  publisherId?: string;
-  name?: string;
-}
-
 const typeColors: Record<string, string> = {
   DISPLAY: 'bg-blue-100 text-blue-700',
   VIDEO: 'bg-red-100 text-red-700',
@@ -44,116 +39,102 @@ interface Props {
 }
 
 export function AdSlotDetail({ id }: Props) {
-  const [adSlot, setAdSlot] = useState<AdSlot | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [roleInfo, setRoleInfo] = useState<RoleInfo | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
+  const user: User | null = session?.user ?? null;
   const [message, setMessage] = useState('');
-  const [booking, setBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Fetch ad slot
-    getAdSlot(id)
-      .then(setAdSlot)
-      .catch(() => setError('Failed to load ad slot details'))
-      .finally(() => setLoading(false));
+  const {
+    data: adSlot,
+    isLoading: loading,
+    isError,
+  } = useQuery({
+    queryKey: ['ad-slot', id],
+    queryFn: () => getAdSlot(id),
+  });
 
-    // Check user session and fetch role
-    authClient
-      .getSession()
-      .then(({ data }) => {
-        if (data?.user) {
-          const sessionUser = data.user as User;
-          setUser(sessionUser);
+  const { data: roleInfo, isLoading: roleLoading } = useQuery({
+    queryKey: ['user-role', user?.id],
+    queryFn: () => getUserRole(user!.id),
+    enabled: Boolean(user?.id),
+  });
 
-          // Fetch role info from backend
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/${sessionUser.id}`
-          )
-            .then((res) => res.json())
-            .then((data) => setRoleInfo(data))
-            .catch(() => setRoleInfo(null))
-            .finally(() => setRoleLoading(false));
-        } else {
-          setRoleLoading(false);
-        }
-      })
-      .catch(() => setRoleLoading(false));
-  }, [id]);
-
-  const handleBooking = async () => {
-    if (!roleInfo?.sponsorId || !adSlot) return;
-
-    setBooking(true);
-    setBookingError(null);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/ad-slots/${adSlot.id}/book`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sponsorId: roleInfo.sponsorId,
-            message: message || undefined,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to book placement');
+  const bookMutation = useMutation({
+    mutationFn: async () => {
+      if (!roleInfo?.sponsorId || !adSlot) {
+        throw new Error('Missing booking details');
       }
 
+      await api(`/api/ad-slots/${adSlot.id}/book`, {
+        method: 'POST',
+        body: JSON.stringify({
+          sponsorId: roleInfo.sponsorId,
+          message: message || undefined,
+        }),
+      });
+
+      return adSlot.id;
+    },
+    onMutate: () => {
+      setBookingError(null);
+    },
+    onSuccess: (adSlotId) => {
       setBookingSuccess(true);
-      setAdSlot({ ...adSlot, isAvailable: false });
-    } catch (err) {
+      queryClient.setQueryData<AdSlot>(['ad-slot', adSlotId], (current) =>
+        current ? { ...current, isAvailable: false } : current
+      );
+      void queryClient.invalidateQueries({ queryKey: ['ad-slots'] });
+    },
+    onError: (err) => {
       setBookingError(err instanceof Error ? err.message : 'Failed to book placement');
-    } finally {
-      setBooking(false);
-    }
+    },
+  });
+
+  const unbookMutation = useMutation({
+    mutationFn: async () => {
+      if (!adSlot) {
+        throw new Error('Missing ad slot');
+      }
+
+      await api(`/api/ad-slots/${adSlot.id}/unbook`, { method: 'POST' });
+
+      return adSlot.id;
+    },
+    onSuccess: (adSlotId) => {
+      setBookingSuccess(false);
+      setMessage('');
+      queryClient.setQueryData<AdSlot>(['ad-slot', adSlotId], (current) =>
+        current ? { ...current, isAvailable: true } : current
+      );
+      void queryClient.invalidateQueries({ queryKey: ['ad-slots'] });
+    },
+    onError: () => {
+      setBookingError('Failed to reset booking');
+    },
+  });
+
+  const handleBooking = async () => {
+    bookMutation.mutate();
   };
 
   const handleUnbook = async () => {
-    if (!adSlot) return;
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/ad-slots/${adSlot.id}/unbook`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to reset booking');
-      }
-
-      setBookingSuccess(false);
-      setAdSlot({ ...adSlot, isAvailable: true });
-      setMessage('');
-    } catch (err) {
-      console.error('Failed to unbook:', err);
-    }
+    unbookMutation.mutate();
   };
 
   if (loading) {
     return <div className="py-12 text-center text-[--color-muted]">Loading...</div>;
   }
 
-  if (error || !adSlot) {
+  if (isError || !adSlot) {
     return (
       <div className="space-y-4">
         <Link href="/marketplace" className="text-[--color-primary] hover:underline">
           ← Back to Marketplace
         </Link>
         <div className="rounded border border-red-200 bg-red-50 p-4 text-red-600">
-          {error || 'Ad slot not found'}
+          {isError ? 'Failed to load ad slot details' : 'Ad slot not found'}
         </div>
       </div>
     );
@@ -253,10 +234,10 @@ export function AdSlotDetail({ id }: Props) {
                 {bookingError && <p className="text-sm text-red-600">{bookingError}</p>}
                 <button
                   onClick={handleBooking}
-                  disabled={booking}
+                  disabled={bookMutation.isPending}
                   className="w-full rounded-lg bg-[--color-primary] px-4 py-3 font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50"
                 >
-                  {booking ? 'Booking...' : 'Book This Placement'}
+                  {bookMutation.isPending ? 'Booking...' : 'Book This Placement'}
                 </button>
               </div>
             ) : (

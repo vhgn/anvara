@@ -1,49 +1,42 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getAdSlots } from '@/lib/api';
 import { authClient } from '@/auth-client';
+import { getUserRole } from '@/lib/auth-helpers';
 import { AdSlotCard } from './ad-slot-card';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291';
-
 export function AdSlotList() {
-  const [adSlots, setAdSlots] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { data: session } = authClient.useSession();
 
-  useEffect(() => {
-    async function loadAdSlots() {
-      if (!session?.user?.id) return;
+  const { data: roleData, isLoading: roleLoading } = useQuery({
+    queryKey: ['user-role', session?.user?.id],
+    queryFn: () => getUserRole(session!.user.id),
+    enabled: Boolean(session?.user?.id),
+  });
 
-      try {
-        // Get the user's publisherId from the backend
-        const roleRes = await fetch(`${API_URL}/api/auth/role/${session.user.id}`);
-        const roleData = await roleRes.json();
+  const {
+    data: adSlots = [],
+    isLoading: adSlotsLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['ad-slots', 'publisher', roleData?.publisherId],
+    queryFn: () => getAdSlots(roleData!.publisherId!),
+    enabled: Boolean(roleData?.publisherId),
+  });
 
-        if (roleData.publisherId) {
-          const data = await getAdSlots(roleData.publisherId);
-          setAdSlots(data);
-        } else {
-          setAdSlots([]);
-        }
-      } catch {
-        setError('Failed to load ad slots');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadAdSlots();
-  }, [session?.user?.id]);
+  const loading = roleLoading || adSlotsLoading;
 
   if (loading) {
     return <div className="py-8 text-center text-[--color-muted]">Loading ad slots...</div>;
   }
 
-  if (error) {
-    return <div className="rounded border border-red-200 bg-red-50 p-4 text-red-600">{error}</div>;
+  if (isError) {
+    return (
+      <div className="rounded border border-red-200 bg-red-50 p-4 text-red-600">
+        Failed to load ad slots
+      </div>
+    );
   }
 
   if (adSlots.length === 0) {
