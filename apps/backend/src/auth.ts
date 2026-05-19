@@ -1,4 +1,4 @@
-import { type Request, type Response, type NextFunction } from 'express';
+import { type RequestHandler } from 'express';
 
 export type User =
   | {
@@ -14,8 +14,15 @@ export type User =
       publisherId: string;
     };
 
+type Role = User['role'];
+type UserForRole<TRole extends Role> = Extract<User, { role: TRole }>;
+
 type Locals = {
-  user?: User;
+  user: User;
+};
+
+type AuthenticatedLocals<TRole extends Role> = {
+  user: UserForRole<TRole>;
 };
 
 // TODO: This middleware doesn't actually validate anything!
@@ -25,16 +32,19 @@ type Locals = {
 // 3. Look up the user in the database
 // 4. Attach user info to req.user
 // 5. Return 401 if invalid
-export async function authMiddleware(
-  _req: Request,
-  res: Response<any, Locals>,
-  next: NextFunction
-) {
+export const authMiddleware: RequestHandler<
+  Record<string, string>,
+  unknown,
+  unknown,
+  unknown,
+  Locals
+> = async (_req, res, next) => {
   // Better Auth will handle validation via headers
   // This is a placeholder for protected routes
 
   // FIXME: real implementation
-  res.locals.user = {
+  const locals = res.locals as Locals;
+  locals.user = {
     id: 'abcd',
     email: 'test@example.com',
     role: 'SPONSOR',
@@ -42,11 +52,15 @@ export async function authMiddleware(
   };
 
   next();
-}
+};
 
-export function roleMiddleware(allowedRoles: Array<'SPONSOR' | 'PUBLISHER'>) {
-  return (_req: Request, res: Response<any, Locals>, next: NextFunction): void => {
-    if (!res.locals.user || !allowedRoles.includes(res.locals.user.role)) {
+export function roleMiddleware<TRole extends Role>(
+  role: TRole
+): RequestHandler<Record<string, string>, unknown, unknown, unknown, AuthenticatedLocals<TRole>> {
+  return (_req, res, next): void => {
+    const locals = res.locals as Locals;
+
+    if (!locals.user || locals.user.role !== role) {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;
     }
