@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type RequestHandler } from 'express';
 import z from 'zod';
 
@@ -12,14 +13,17 @@ export type RouteValidator<
   body?: TRequestBody;
 };
 
-export function validate<TValidator extends RouteValidator<any, any, any>>(
+export function validate<
+  TValidator extends RouteValidator<any, any, any>,
+  TLocals extends Record<string, any> = Record<string, any>,
+>(
   validator: TValidator
 ): RequestHandler<
   z.output<TValidator['params']>,
   any,
   z.output<TValidator['body']>,
   z.output<TValidator['query']>,
-  any
+  TLocals
 > {
   return (req, res, next) => {
     try {
