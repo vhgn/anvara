@@ -18,10 +18,8 @@ router.post('/login', async (_req, res) => {
 });
 
 // GET /api/auth/me - Get current user (for API clients)
-router.get('/me', authMiddleware, async (req, res) => {
-  // TODO: Challenge 3 - Implement auth middleware to validate session
-  // For now, return unauthorized
-  res.status(401).json({ error: 'Not authenticated' });
+router.get('/me', authMiddleware, async (_req, res) => {
+  res.json({ user: res.locals.user });
 });
 
 // GET /api/auth/role/:userId - Get user role based on Sponsor/Publisher records

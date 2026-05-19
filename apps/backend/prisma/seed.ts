@@ -2,7 +2,6 @@
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { hashPassword } from 'better-auth/crypto';
-import pg from 'pg';
 
 const connectionString = process.env.DATABASE_URL!;
 if (!connectionString) {
@@ -13,132 +12,67 @@ if (!connectionString) {
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-async function createBetterAuthTables(client: pg.PoolClient) {
-  console.log('Creating Better Auth tables...');
-
-  // Create user table
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS "user" (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      "emailVerified" BOOLEAN NOT NULL DEFAULT FALSE,
-      image TEXT,
-      "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
-      "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  `);
-
-  // Create session table
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS "session" (
-      id TEXT PRIMARY KEY,
-      "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-      token TEXT NOT NULL UNIQUE,
-      "expiresAt" TIMESTAMP NOT NULL,
-      "ipAddress" TEXT,
-      "userAgent" TEXT,
-      "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
-      "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  `);
-
-  // Create account table
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS "account" (
-      id TEXT PRIMARY KEY,
-      "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-      "accountId" TEXT NOT NULL,
-      "providerId" TEXT NOT NULL,
-      "accessToken" TEXT,
-      "refreshToken" TEXT,
-      "accessTokenExpiresAt" TIMESTAMP,
-      "refreshTokenExpiresAt" TIMESTAMP,
-      password TEXT,
-      "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
-      "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  `);
-
-  // Create verification table
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS "verification" (
-      id TEXT PRIMARY KEY,
-      identifier TEXT NOT NULL,
-      value TEXT NOT NULL,
-      "expiresAt" TIMESTAMP NOT NULL,
-      "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
-      "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  `);
-
-  console.log('  ✓ Better Auth tables created');
-}
-
 async function seedBetterAuthUsers() {
   console.log('Seeding Better Auth users...');
 
-  const pool = new pg.Pool({ connectionString });
-  const client = await pool.connect();
+  // Clean existing auth data
+  await prisma.session.deleteMany();
+  await prisma.account.deleteMany();
+  await prisma.verification.deleteMany();
+  await prisma.user.deleteMany();
 
-  try {
-    // Create tables first (if they don't exist)
-    await createBetterAuthTables(client);
+  const now = new Date();
+  const hashedPassword = await hashPassword('password');
 
-    // Clean existing auth data
-    await client.query('DELETE FROM "session"');
-    await client.query('DELETE FROM "account"');
-    await client.query('DELETE FROM "verification"');
-    await client.query('DELETE FROM "user"');
+  // Create sponsor user with a fixed ID so we can link it
+  const sponsorUserId = crypto.randomUUID();
+  await prisma.user.create({
+    data: {
+      id: sponsorUserId,
+      name: 'Demo Sponsor',
+      email: 'sponsor@example.com',
+      emailVerified: true,
+      createdAt: now,
+      updatedAt: now,
+      accounts: {
+        create: {
+          id: crypto.randomUUID(),
+          accountId: sponsorUserId,
+          providerId: 'credential',
+          password: hashedPassword,
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+    },
+  });
+  console.log('  ✓ Created sponsor user: sponsor@example.com / password');
 
-    const now = new Date().toISOString();
-    const hashedPassword = await hashPassword('password');
+  // Create publisher user with a fixed ID so we can link it
+  const publisherUserId = crypto.randomUUID();
+  await prisma.user.create({
+    data: {
+      id: publisherUserId,
+      name: 'Demo Publisher',
+      email: 'publisher@example.com',
+      emailVerified: true,
+      createdAt: now,
+      updatedAt: now,
+      accounts: {
+        create: {
+          id: crypto.randomUUID(),
+          accountId: publisherUserId,
+          providerId: 'credential',
+          password: hashedPassword,
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+    },
+  });
+  console.log('  ✓ Created publisher user: publisher@example.com / password');
 
-    // Create sponsor user with a fixed ID so we can link it
-    const sponsorUserId = crypto.randomUUID();
-    await client.query(
-      `INSERT INTO "user" (id, name, email, "emailVerified", image, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id`,
-      [sponsorUserId, 'Demo Sponsor', 'sponsor@example.com', true, null, now, now]
-    );
-
-    await client.query(
-      `INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [crypto.randomUUID(), sponsorUserId, sponsorUserId, 'credential', hashedPassword, now, now]
-    );
-    console.log('  ✓ Created sponsor user: sponsor@example.com / password');
-
-    // Create publisher user with a fixed ID so we can link it
-    const publisherUserId = crypto.randomUUID();
-    await client.query(
-      `INSERT INTO "user" (id, name, email, "emailVerified", image, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id`,
-      [publisherUserId, 'Demo Publisher', 'publisher@example.com', true, null, now, now]
-    );
-
-    await client.query(
-      `INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        crypto.randomUUID(),
-        publisherUserId,
-        publisherUserId,
-        'credential',
-        hashedPassword,
-        now,
-        now,
-      ]
-    );
-    console.log('  ✓ Created publisher user: publisher@example.com / password');
-
-    return { sponsorUserId, publisherUserId };
-  } finally {
-    client.release();
-    await pool.end();
-  }
+  return { sponsorUserId, publisherUserId };
 }
 
 async function main() {
