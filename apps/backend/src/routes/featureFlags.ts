@@ -50,11 +50,13 @@ router.get(
         },
       });
 
-      const rollout = weightedRandomPick(rollouts.map((rollout) => ({ weight: rollout.percentage.toNumber(), value: rollout })))
+      const rollout = weightedRandomPick(
+        rollouts.map((rollout) => ({ weight: rollout.percentage.toNumber(), value: rollout }))
+      );
 
       // Feature flag should be used on frontend when at least one option is configured
       if (!rollout) {
-        res.status(501).json({ error: "Feature flag does not have rollout values" })
+        res.status(501).json({ error: 'Feature flag does not have rollout values' });
         return;
       }
 
@@ -84,7 +86,11 @@ router.get(
       value = participant.rollout.value;
     }
 
-    res.status(200).header("Cache-Control", "private, max-age=300").header("Vary", "Authorization").json({ value });
+    res
+      .status(200)
+      .header('Cache-Control', 'private, max-age=300')
+      .header('Vary', 'Authorization')
+      .json({ value });
   }
 );
 

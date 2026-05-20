@@ -2,7 +2,8 @@ import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import { validate } from '../validate.js';
 import z from 'zod';
-import { authMiddleware } from '../auth.js';
+import { auth, authMiddleware } from '../auth.js';
+import { toNodeHandler } from 'better-auth/node';
 
 const router: IRouter = Router();
 
@@ -60,5 +61,7 @@ router.get(
     }
   }
 );
+
+router.all('/*splat', toNodeHandler(auth));
 
 export default router;

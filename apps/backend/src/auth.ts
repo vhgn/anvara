@@ -29,7 +29,7 @@ type AuthenticatedLocals<TRole extends Role> = {
   user: UserForRole<TRole>;
 };
 
-const auth = betterAuth({
+export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
@@ -57,6 +57,7 @@ export const authMiddleware: RequestHandler<
   });
 
   if (!authInfo) {
+    console.info('Headers', fromNodeHeaders(req.headers));
     res.status(401).json({ error: 'Unauthenticated' });
     return;
   }

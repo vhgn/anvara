@@ -1,4 +1,4 @@
-import { logger } from './utils';
+import { isClient, logger } from './utils';
 import type {
   AdSlot,
   AdSlotBookingInput,
@@ -22,6 +22,7 @@ import type {
   Publisher,
   Sponsor,
 } from './types';
+import { getExtraHeaders } from './ssr';
 
 // TODO: Add authentication token to requests
 // Hint: Include credentials: 'include' for cookie-based auth, or
@@ -30,8 +31,13 @@ import type {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291';
 
 export async function api<T>(endpoint: string, options?: globalThis.RequestInit): Promise<T> {
+  let extraHeaders: Record<string, string> = {};
+  if (!isClient) {
+    extraHeaders = await getExtraHeaders();
+  }
+
   const res = await fetch(`${API_URL}${endpoint}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...options?.headers, ...extraHeaders },
     credentials: 'include',
     ...options,
   });
@@ -116,4 +122,5 @@ export const createPlacement = (data: PlacementCreateInput) =>
 export const getStats = () => api<DashboardStats>('/api/dashboard/stats');
 
 // Feature flags
-export const getFeatureFlag = (key: string) => api<{ value: string }>(`/api/feature-flags/${key}`).then(({ value }) => value);
+export const getFeatureFlag = (key: string) =>
+  api<{ value: string }>(`/api/feature-flags/${key}`).then(({ value }) => value);

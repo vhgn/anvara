@@ -10,7 +10,7 @@ export async function CampaignList(props: { sponsorId: string }) {
   try {
     campaigns = await getCampaigns(props.sponsorId);
   } catch (e) {
-    logger.error(e)
+    logger.error(e);
     return (
       <div className="rounded border border-red-200 bg-red-50 p-4 text-red-600">
         Failed to load campaigns

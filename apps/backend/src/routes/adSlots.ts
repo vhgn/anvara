@@ -10,8 +10,6 @@ const router: IRouter = Router();
 // GET /api/ad-slots - List available ad slots
 router.get(
   '/',
-  authMiddleware,
-  roleMiddleware('PUBLISHER'),
   validate({
     query: z.object({
       type: AdSlotTypeSchema.optional(),
@@ -21,11 +19,9 @@ router.get(
   async (req, res) => {
     try {
       const { type, available } = req.query;
-      const user = res.locals.user;
 
       const adSlots = await prisma.adSlot.findMany({
         where: {
-          publisherId: user.publisherId,
           ...(type && {
             type,
           }),
