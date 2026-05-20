@@ -1,20 +1,12 @@
 import express, { type Application } from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
 
 const app: Application = express();
 const PORT = process.env.BACKEND_PORT || 4291;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3847';
 
 // Middleware
 // TODO: Add rate limiting middleware to prevent abuse (e.g., express-rate-limit)
-app.use(
-  cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-  })
-);
 app.use(express.json());
 app.use(cookieParser());
 

@@ -25,6 +25,8 @@ import type {
 } from './types';
 
 // We can use API_URL to not even expose backend's url to the client
+// It is not a major security improvement, we can at least avoid extra CORS requests
+// Ideally we would have a reverse proxy doing that
 const API_URL = isClient
   ? ''
   : process.env.API_URL || 'http://localhost:4291';
