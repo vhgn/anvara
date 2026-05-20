@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { authClient } from '@/auth-client';
-import { getUserRole } from '@/lib/auth-helpers';
+import { getUserRole } from '@/lib/api';
 
 export function Nav() {
   const { data: session, isPending } = authClient.useSession();

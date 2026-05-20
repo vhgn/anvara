@@ -1,9 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getAdSlots } from '@/lib/api';
+import { getAdSlots, getUserRole } from '@/lib/api';
 import { authClient } from '@/auth-client';
-import { getUserRole } from '@/lib/auth-helpers';
 import { AdSlotCard } from './ad-slot-card';
 
 export function AdSlotList() {

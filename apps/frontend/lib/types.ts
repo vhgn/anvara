@@ -6,6 +6,29 @@ export interface User {
   email: string;
 }
 
+export type RoleData =
+  | {
+      role: 'sponsor';
+      sponsorId: string;
+      name: string;
+
+      publisherId?: undefined;
+    }
+  | {
+      role: 'publisher';
+      publisherId: string;
+      name: string;
+
+      sponsorId?: undefined;
+    }
+  | {
+      role: null;
+
+      name?: undefined;
+      sponsorId?: undefined;
+      publisherId?: undefined;
+    };
+
 export type CampaignStatus =
   | 'DRAFT'
   | 'PENDING_REVIEW'

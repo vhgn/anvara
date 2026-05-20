@@ -20,6 +20,7 @@ import type {
   PlacementListItem,
   PlacementStatus,
   Publisher,
+  RoleData,
   Sponsor,
 } from './types';
 import { getExtraHeaders } from './ssr';
@@ -55,6 +56,24 @@ export async function api<T>(endpoint: string, options?: globalThis.RequestInit)
   }
 
   return res.json();
+}
+
+type ServerSession = {
+  user: {
+    id: string;
+    email: string;
+  };
+  session: unknown;
+};
+
+export async function getServerSession(): Promise<ServerSession | null> {
+  try {
+    return await api<ServerSession>('/api/auth/get-session', {
+      cache: 'no-store',
+    });
+  } catch {
+    return null;
+  }
 }
 
 function queryString(params: Record<string, string | number | boolean | undefined>) {
@@ -124,3 +143,14 @@ export const getStats = () => api<DashboardStats>('/api/dashboard/stats');
 // Feature flags
 export const getFeatureFlag = (key: string) =>
   api<{ value: string }>(`/api/feature-flags/${key}`).then(({ value }) => value);
+
+// User's role
+export async function getUserRole(userId: string): Promise<RoleData> {
+  try {
+    return await api<RoleData>(`/api/auth/role/${userId}`, {
+      cache: 'no-store', // Always fetch fresh role data
+    });
+  } catch {
+    return { role: null };
+  }
+}

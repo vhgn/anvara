@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
-import { getUserRole } from '@/lib/auth-helpers';
 import { CampaignList } from './components/campaign-list';
 import { Suspense } from 'react';
-import { getServerSession } from '@/lib/api';
+import { getServerSession, getUserRole } from '@/lib/api';
 
 export default async function SponsorDashboard() {
   const session = await getServerSession();

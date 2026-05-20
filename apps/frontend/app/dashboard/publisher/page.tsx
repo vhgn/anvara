@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
-import { getUserRole } from '@/lib/auth-helpers';
 import { AdSlotList } from './components/ad-slot-list';
-import { getServerSession } from '@/lib/api';
+import { getServerSession, getUserRole } from '@/lib/api';
 
 export default async function PublisherDashboard() {
   const session = await getServerSession();

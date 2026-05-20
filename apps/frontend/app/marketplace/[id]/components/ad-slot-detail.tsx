@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { bookAdSlot, getAdSlot, unbookAdSlot } from '@/lib/api';
+import { bookAdSlot, getAdSlot, getUserRole, unbookAdSlot } from '@/lib/api';
 import { authClient } from '@/auth-client';
-import { getUserRole } from '@/lib/auth-helpers';
 import type { AdSlotDetail as AdSlot, User } from '@/lib/types';
 
 const typeColors: Record<string, string> = {
