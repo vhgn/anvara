@@ -6,6 +6,7 @@ import campaignsRoutes from './campaigns.js';
 import adSlotsRoutes from './adSlots.js';
 import placementsRoutes from './placements.js';
 import dashboardRoutes from './dashboard.js';
+import featureFlagsRoutes from './featureFlags.js';
 import healthRoutes from './health.js';
 
 const router: IRouter = Router();
@@ -18,6 +19,7 @@ router.use('/campaigns', campaignsRoutes);
 router.use('/ad-slots', adSlotsRoutes);
 router.use('/placements', placementsRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/feature-flags', featureFlagsRoutes);
 router.use('/health', healthRoutes);
 
 export default router;

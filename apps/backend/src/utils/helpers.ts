@@ -57,6 +57,25 @@ export function clampValue(value: number, min: number, max: number): number {
   return value;
 }
 
+export function weightedRandomPick<TValue>(
+  options: { value: TValue; weight: number }[],
+  random = Math.random
+): TValue | undefined {
+  const total = options.reduce((sum, option) => sum + option.weight, 0);
+
+  if (total <= 0) return undefined;
+
+  const threshold = random() * total;
+  let cumulativeWeight = 0;
+
+  const pickedOption = options.find((option) => {
+    cumulativeWeight += option.weight;
+    return threshold < cumulativeWeight;
+  });
+
+  return pickedOption?.value;
+}
+
 // TODO: Add proper date formatting helper
 // This is a stub that candidates might notice and implement
 export function formatDate(date: string | number | Date): string {

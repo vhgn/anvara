@@ -45,13 +45,6 @@ const auth = betterAuth({
   },
 });
 
-// TODO: This middleware doesn't actually validate anything!
-// It should:
-// 1. Check for Authorization header or session cookie
-// 2. Validate the token/session
-// 3. Look up the user in the database
-// 4. Attach user info to req.user
-// 5. Return 401 if invalid
 export const authMiddleware: RequestHandler<
   Record<string, string>,
   unknown,

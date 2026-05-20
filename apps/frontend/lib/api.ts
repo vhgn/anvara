@@ -114,3 +114,6 @@ export const createPlacement = (data: PlacementCreateInput) =>
 
 // Dashboard
 export const getStats = () => api<DashboardStats>('/api/dashboard/stats');
+
+// Feature flags
+export const getFeatureFlag = (key: string) => api<{ value: string }>(`/api/feature-flags/${key}`).then(({ value }) => value);
