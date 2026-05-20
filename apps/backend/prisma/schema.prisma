@@ -31,6 +31,7 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
+  features      RolloutParticipant[]
 
   @@unique([email])
   @@map("user")
@@ -268,6 +269,54 @@ model Payment {
   sponsor   Sponsor @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
 
   @@map("payments")
+}
+
+// ============================================================================
+// A/B TESTING
+// ============================================================================
+
+model FeatureFlag {
+  id String @id @default(cuid())
+
+  key String
+  description String
+
+  rollouts FeatureRollout[]
+  participants RolloutParticipant[]
+
+  @@unique([key])
+  @@map("feature_flags")
+}
+
+model FeatureRollout {
+  id String @id @default(cuid())
+
+  value String
+
+  percentage Decimal
+
+  featureId String
+  feature FeatureFlag @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  participants RolloutParticipant[]
+
+  @@map("feature_rollouts")
+}
+
+model RolloutParticipant {
+  id String @id @default(cuid())
+
+  rolloutId String
+  rollout FeatureRollout @relation(fields: [rolloutId], references: [id], onDelete: Cascade)
+
+  featureId String
+  feature FeatureFlag @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, featureId])
+  @@map("rollout_participants")
 }
 
 // ============================================================================

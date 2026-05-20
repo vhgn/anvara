@@ -44,7 +44,8 @@ export function cn(...classes: string[]): string {
 }
 
 // Sleep utility for testing/debugging
-export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+export const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 // Deep clone an object
 // NOTE: This doesn't handle circular references, dates, or functions

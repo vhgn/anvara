@@ -20,6 +20,9 @@ async function seedBetterAuthUsers() {
   await prisma.account.deleteMany();
   await prisma.verification.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.featureFlag.deleteMany();
+  await prisma.featureRollout.deleteMany();
+  await prisma.rolloutParticipant.deleteMany();
 
   const now = new Date();
   const hashedPassword = await hashPassword('password');
@@ -378,7 +381,7 @@ async function main() {
       publisherId: startupBlog.id,
       isAvailable: false, // Already booked
     },
-  ];
+  ] as const;
 
   for (const slot of adSlots) {
     await prisma.adSlot.create({ data: slot });
@@ -415,8 +418,31 @@ async function main() {
     },
   });
 
+  // Create feature flags
+  const feature = await prisma.featureFlag.create({
+    data: {
+      key: 'home_page_button',
+      description: 'Home page button text',
+    },
+  });
+
+  await prisma.featureRollout.createMany({
+    data: [
+      {
+        featureId: feature.id,
+        value: 'Getting started',
+        percentage: 40,
+      },
+      {
+        featureId: feature.id,
+        value: 'Try now for free',
+        percentage: 60,
+      },
+    ],
+  });
+
   console.log('\nPrisma seed completed!');
-  console.log('  Created: 2 sponsors, 5 publishers, 20 ad slots, 2 campaigns');
+  console.log('  Created: 2 sponsors, 5 publishers, 20 ad slots, 2 campaigns, 1 feature flags');
 
   console.log('\n✅ All seeding complete!');
 }
