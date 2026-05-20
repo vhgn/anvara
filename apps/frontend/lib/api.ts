@@ -23,39 +23,39 @@ import type {
   RoleData,
   Sponsor,
 } from './types';
-import { getExtraHeaders } from './ssr';
 
-// TODO: Add authentication token to requests
-// Hint: Include credentials: 'include' for cookie-based auth, or
-// add Authorization header for token-based auth
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291';
+// We can use API_URL to not even expose backend's url to the client
+const API_URL = isClient
+  ? ''
+  : process.env.API_URL || 'http://localhost:4291';
 
 export async function api<T>(endpoint: string, options?: globalThis.RequestInit): Promise<T> {
   let extraHeaders: Record<string, string> = {};
   if (!isClient) {
+    // This ensures server streamed pages will send cookies to backend
+    const { getExtraHeaders } = await import('./ssr');
     extraHeaders = await getExtraHeaders();
   }
 
-  const res = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetch(`${API_URL}${endpoint}`, {
     headers: { 'Content-Type': 'application/json', ...options?.headers, ...extraHeaders },
     credentials: 'include',
     ...options,
   });
 
-  if (!res.ok) {
-    const { error } = await res.json().catch((e) => {
+  if (!response.ok) {
+    const { error } = await response.json().catch((e) => {
       logger.error(e);
       return { error: 'Failed to parse error' };
     });
     throw new Error(error);
   }
 
-  if (res.status === 204) {
+  if (response.status === 204) {
     return undefined as T;
   }
 
-  return res.json();
+  return response.json();
 }
 
 type ServerSession = {

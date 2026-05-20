@@ -3,6 +3,8 @@
 // TODO: Add hero section, features, testimonials, etc.
 // HINT: Check out the bonus challenge for marketing landing page!
 
+import { FeatureFlagCta } from './components/feature-flag-cta';
+
 export default function Home() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
@@ -12,12 +14,7 @@ export default function Home() {
       </p>
 
       <div className="flex gap-4">
-        <a
-          href="/login"
-          className="rounded-lg bg-[--color-primary] px-6 py-3 text-white hover:bg-[--color-primary-hover]"
-        >
-          Get Started
-        </a>
+        <FeatureFlagCta />
       </div>
 
       <div className="mt-16 grid gap-8 text-left sm:grid-cols-2">

@@ -6,22 +6,22 @@ import { prisma } from './db.js';
 
 export type User =
   | {
-      id: string;
-      email: string;
-      role: 'SPONSOR';
-      sponsorId: string;
-    }
+    id: string;
+    email: string;
+    role: 'SPONSOR';
+    sponsorId: string;
+  }
   | {
-      id: string;
-      email: string;
-      role: 'PUBLISHER';
-      publisherId: string;
-    };
+    id: string;
+    email: string;
+    role: 'PUBLISHER';
+    publisherId: string;
+  };
 
 type Role = User['role'];
 type UserForRole<TRole extends Role> = Extract<User, { role: TRole }>;
 
-type Locals = {
+type AuthLocals = {
   user: User;
 };
 
@@ -50,15 +50,29 @@ export const authMiddleware: RequestHandler<
   unknown,
   unknown,
   unknown,
-  Locals
+  AuthLocals
+> = async (req, res, next) => {
+  await optionalAuthMiddleware(req, res, () => {
+    if (!res.locals.user) {
+      res.status(401).json({ error: 'Unauthenticated' });
+      return;
+    }
+    next();
+  });
+}
+export const optionalAuthMiddleware: RequestHandler<
+  Record<string, string>,
+  unknown,
+  unknown,
+  unknown,
+  Partial<AuthLocals>
 > = async (req, res, next) => {
   const authInfo = await auth.api.getSession({
     headers: fromNodeHeaders(req.headers),
   });
 
   if (!authInfo) {
-    console.info('Headers', fromNodeHeaders(req.headers));
-    res.status(401).json({ error: 'Unauthenticated' });
+    next();
     return;
   }
 
@@ -101,7 +115,7 @@ export function roleMiddleware<TRole extends Role>(
   role: TRole
 ): RequestHandler<Record<string, string>, unknown, unknown, unknown, AuthenticatedLocals<TRole>> {
   return (_req, res, next): void => {
-    const locals = res.locals as Locals;
+    const locals = res.locals
 
     if (!locals.user || locals.user.role !== role) {
       res.status(403).json({ error: 'Insufficient permissions' });

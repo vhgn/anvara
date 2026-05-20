@@ -1,5 +1,6 @@
 import express, { type Application } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
 
 const app: Application = express();
@@ -15,6 +16,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
 
 // Mount all API routes
 app.use('/api', routes);
@@ -52,6 +54,8 @@ app.listen(PORT, () => {
   console.log('    POST   /api/placements');
   console.log('  Dashboard:');
   console.log('    GET    /api/dashboard/stats');
+  console.log('  Feature Flags:');
+  console.log('    GET    /api/feature-flags/:key');
   console.log('  Health:');
   console.log('    GET    /api/health');
   console.log('');

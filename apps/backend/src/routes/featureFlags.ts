@@ -1,18 +1,32 @@
 import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
-import { authMiddleware } from '../auth.js';
+import { optionalAuthMiddleware } from '../auth.js';
 import { validate } from '../validate.js';
 import { weightedRandomPick } from '../utils/helpers.js';
 import z from 'zod';
 
 const router: IRouter = Router();
 
+const FEATURE_FLAG_PARTICIPANT_KEY = "feature-flags.participant"
+
 // GET /api/feature-flags/:key - Get overall platform stats
 router.get(
   '/:key',
-  authMiddleware,
+  optionalAuthMiddleware,
   validate({ params: z.object({ key: z.string() }) }),
   async (req, res) => {
+    const participantIdCookie = req.cookies[FEATURE_FLAG_PARTICIPANT_KEY]
+
+    let participantId: string
+    if (participantIdCookie) {
+      participantId = participantIdCookie
+    } else {
+      console.log("Generating participantId")
+      participantId = crypto.randomUUID()
+    }
+
+
+    console.log("Cookies", JSON.stringify(req.cookies))
     const featureFlag = await prisma.featureFlag.findUnique({
       where: {
         key: req.params.key,
@@ -28,7 +42,7 @@ router.get(
             },
           },
           where: {
-            userId: res.locals.user.id,
+            participantId,
           },
         },
       },
@@ -69,15 +83,15 @@ router.get(
           },
         },
         where: {
-          userId_featureId: {
+          participantId_featureId: {
             featureId: featureFlag.id,
-            userId: res.locals.user.id,
+            participantId,
           },
         },
         create: {
           featureId: featureFlag.id,
           rolloutId: rollout.id,
-          userId: res.locals.user.id,
+          participantId,
         },
         update: {},
       });
@@ -86,10 +100,13 @@ router.get(
       value = participant.rollout.value;
     }
 
+    const cacheTimeSeconds = 5 * 60
+
     res
       .status(200)
-      .header('Cache-Control', 'private, max-age=300')
+      .header('Cache-Control', `private, max-age=${cacheTimeSeconds}`)
       .header('Vary', 'Authorization')
+      .cookie(FEATURE_FLAG_PARTICIPANT_KEY, participantId)
       .json({ value });
   }
 );

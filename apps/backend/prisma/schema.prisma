@@ -29,9 +29,9 @@ model User {
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
+
   sessions      Session[]
   accounts      Account[]
-  features      RolloutParticipant[]
 
   @@unique([email])
   @@map("user")
@@ -312,10 +312,9 @@ model RolloutParticipant {
   featureId String
   feature FeatureFlag @relation(fields: [featureId], references: [id], onDelete: Cascade)
 
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  participantId String
 
-  @@unique([userId, featureId])
+  @@unique([participantId, featureId])
   @@map("rollout_participants")
 }
 
