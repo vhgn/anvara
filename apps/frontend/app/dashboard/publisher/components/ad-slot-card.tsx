@@ -1,14 +1,9 @@
 'use client';
 
+import type { AdSlotListItem } from '@/lib/types';
+
 interface AdSlotCardProps {
-  adSlot: {
-    id: string;
-    name: string;
-    description?: string;
-    type: string;
-    basePrice: number;
-    isAvailable: boolean;
-  };
+  adSlot: AdSlotListItem;
 }
 
 const typeColors: Record<string, string> = {

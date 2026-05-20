@@ -3,29 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, getAdSlot } from '@/lib/api';
+import { bookAdSlot, getAdSlot, unbookAdSlot } from '@/lib/api';
 import { authClient } from '@/auth-client';
 import { getUserRole } from '@/lib/auth-helpers';
-
-interface AdSlot {
-  id: string;
-  name: string;
-  description?: string;
-  type: string;
-  basePrice: number;
-  isAvailable: boolean;
-  publisher?: {
-    id: string;
-    name: string;
-    website?: string;
-  };
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+import type { AdSlotDetail as AdSlot, User } from '@/lib/types';
 
 const typeColors: Record<string, string> = {
   DISPLAY: 'bg-blue-100 text-blue-700',
@@ -67,12 +48,9 @@ export function AdSlotDetail({ id }: Props) {
         throw new Error('Missing booking details');
       }
 
-      await api(`/api/ad-slots/${adSlot.id}/book`, {
-        method: 'POST',
-        body: JSON.stringify({
-          sponsorId: roleInfo.sponsorId,
-          message: message || undefined,
-        }),
+      await bookAdSlot(adSlot.id, {
+        sponsorId: roleInfo.sponsorId,
+        message: message || undefined,
       });
 
       return adSlot.id;
@@ -98,7 +76,7 @@ export function AdSlotDetail({ id }: Props) {
         throw new Error('Missing ad slot');
       }
 
-      await api(`/api/ad-slots/${adSlot.id}/unbook`, { method: 'POST' });
+      await unbookAdSlot(adSlot.id);
 
       return adSlot.id;
     },
