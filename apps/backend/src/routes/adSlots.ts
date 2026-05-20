@@ -14,11 +14,12 @@ router.get(
     query: z.object({
       type: AdSlotTypeSchema.optional(),
       available: z.coerce.boolean().optional(),
+      publisherId: z.string().optional(),
     }),
   }),
   async (req, res) => {
     try {
-      const { type, available } = req.query;
+      const { type, available, publisherId } = req.query;
 
       const adSlots = await prisma.adSlot.findMany({
         where: {
@@ -26,6 +27,7 @@ router.get(
             type,
           }),
           ...(available !== undefined && { isAvailable: available }),
+          ...(publisherId !== undefined && { publisherId }),
         },
         include: {
           publisher: { select: { id: true, name: true, category: true, monthlyViews: true } },
@@ -46,12 +48,10 @@ router.get(
 router.get(
   '/:id',
   authMiddleware,
-  roleMiddleware('PUBLISHER'),
   validate({ params: z.object({ id: z.string() }) }),
   async (req, res) => {
     try {
       const { id } = req.params;
-      const user = res.locals.user;
 
       const adSlot = await prisma.adSlot.findUnique({
         where: { id },
@@ -70,10 +70,10 @@ router.get(
         return;
       }
 
-      if (adSlot.publisherId !== user.publisherId) {
-        res.status(403).json({ error: 'Cannot access another publisher ad slot' });
-        return;
-      }
+      // if (adSlot.publisherId !== user.publisherId) {
+      //   res.status(403).json({ error: 'Cannot access another publisher ad slot' });
+      //   return;
+      // }
 
       res.json(adSlot);
     } catch (error) {

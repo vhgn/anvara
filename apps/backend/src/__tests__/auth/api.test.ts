@@ -18,8 +18,9 @@ vi.mock('better-auth/adapters/prisma', () => ({
 
 vi.mock('better-auth/node', () => ({
   fromNodeHeaders: (headers: unknown) => headers,
-  toNodeHandler: () => (_req: unknown, res: { status: (status: number) => { json: (body: unknown) => void } }) =>
-    res.status(404).json({ error: 'Not found' }),
+  toNodeHandler:
+    () => (_req: unknown, res: { status: (status: number) => { json: (body: unknown) => void } }) =>
+      res.status(404).json({ error: 'Not found' }),
 }));
 
 vi.mock('../../db.js', () => ({

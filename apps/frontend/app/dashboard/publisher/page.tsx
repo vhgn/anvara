@@ -22,7 +22,7 @@ export default async function PublisherDashboard() {
         {/* TODO: Add CreateAdSlotButton here */}
       </div>
 
-      <AdSlotList />
+      <AdSlotList publisherId={roleData.publisherId} />
     </div>
   );
 }

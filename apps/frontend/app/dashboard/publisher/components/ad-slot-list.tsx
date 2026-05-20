@@ -1,32 +1,21 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getAdSlots, getUserRole } from '@/lib/api';
-import { authClient } from '@/auth-client';
+import { getAdSlots } from '@/lib/api';
 import { AdSlotCard } from './ad-slot-card';
 
-export function AdSlotList() {
-  const { data: session } = authClient.useSession();
-
-  const { data: roleData, isLoading: roleLoading } = useQuery({
-    queryKey: ['user-role', session?.user?.id],
-    queryFn: () => getUserRole(session!.user.id),
-    enabled: Boolean(session?.user?.id),
-  });
-
+export function AdSlotList(props: { publisherId: string }) {
+  const { publisherId } = props;
   const {
     data: adSlots = [],
-    isLoading: adSlotsLoading,
+    isLoading,
     isError,
   } = useQuery({
-    queryKey: ['ad-slots', 'publisher', roleData?.publisherId],
-    queryFn: () => getAdSlots(roleData!.publisherId!),
-    enabled: Boolean(roleData?.publisherId),
+    queryKey: ['ad-slots', 'publisher', publisherId],
+    queryFn: () => getAdSlots({ publisherId }),
   });
 
-  const loading = roleLoading || adSlotsLoading;
-
-  if (loading) {
+  if (isLoading) {
     return <div className="py-8 text-center text-[--color-muted]">Loading ad slots...</div>;
   }
 

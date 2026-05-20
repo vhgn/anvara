@@ -27,9 +27,7 @@ import type {
 // We can use API_URL to not even expose backend's url to the client
 // It is not a major security improvement, we can at least avoid extra CORS requests
 // Ideally we would have a reverse proxy doing that
-const API_URL = isClient
-  ? ''
-  : process.env.API_URL || 'http://localhost:4291';
+const API_URL = isClient ? '' : process.env.API_URL || 'http://localhost:4291';
 
 export async function api<T>(endpoint: string, options?: globalThis.RequestInit): Promise<T> {
   let extraHeaders: Record<string, string> = {};
@@ -106,10 +104,11 @@ export const deleteCampaign = (id: string) =>
   api<void>(`/api/campaigns/${id}`, { method: 'DELETE' });
 
 // Ad Slots
-export const getAdSlots = (filters?: { type?: AdSlotType; available?: boolean } | string) =>
-  api<AdSlotListItem[]>(
-    `/api/ad-slots${queryString(typeof filters === 'string' ? {} : (filters ?? {}))}`
-  );
+export const getAdSlots = (filters?: {
+  type?: AdSlotType;
+  available?: boolean;
+  publisherId?: string;
+}) => api<AdSlotListItem[]>(`/api/ad-slots${queryString(filters ?? {})}`);
 export const getAdSlot = (id: string) => api<AdSlotDetail>(`/api/ad-slots/${id}`);
 export const createAdSlot = (data: AdSlotCreateInput) =>
   api<AdSlot & { publisher: Pick<Publisher, 'id' | 'name'> }>('/api/ad-slots', {

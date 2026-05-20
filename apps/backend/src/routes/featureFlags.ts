@@ -7,7 +7,7 @@ import z from 'zod';
 
 const router: IRouter = Router();
 
-const FEATURE_FLAG_PARTICIPANT_KEY = "feature-flags.participant"
+const FEATURE_FLAG_PARTICIPANT_KEY = 'feature-flags.participant';
 
 // GET /api/feature-flags/:key - Get overall platform stats
 router.get(
@@ -15,18 +15,17 @@ router.get(
   optionalAuthMiddleware,
   validate({ params: z.object({ key: z.string() }) }),
   async (req, res) => {
-    const participantIdCookie = req.cookies[FEATURE_FLAG_PARTICIPANT_KEY]
+    const participantIdCookie = req.cookies[FEATURE_FLAG_PARTICIPANT_KEY];
 
-    let participantId: string
+    let participantId: string;
     if (participantIdCookie) {
-      participantId = participantIdCookie
+      participantId = participantIdCookie;
     } else {
-      console.log("Generating participantId")
-      participantId = crypto.randomUUID()
+      console.log('Generating participantId');
+      participantId = crypto.randomUUID();
     }
 
-
-    console.log("Cookies", JSON.stringify(req.cookies))
+    console.log('Cookies', JSON.stringify(req.cookies));
     const featureFlag = await prisma.featureFlag.findUnique({
       where: {
         key: req.params.key,
@@ -100,7 +99,7 @@ router.get(
       value = participant.rollout.value;
     }
 
-    const cacheTimeSeconds = 5 * 60
+    const cacheTimeSeconds = 5 * 60;
 
     res
       .status(200)

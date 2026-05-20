@@ -6,10 +6,10 @@ export async function getExtraHeaders() {
   let extraHeaders: Record<string, string> = {};
   const headerValues = await headers();
 
-  const cookieHeader = headerValues.get("cookie")
+  const cookieHeader = headerValues.get('cookie');
   if (cookieHeader) {
     extraHeaders = {
-      Cookie: cookieHeader
+      Cookie: cookieHeader,
     };
   }
 

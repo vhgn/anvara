@@ -1,7 +1,7 @@
 import { getFeatureFlag } from '@/lib/api';
 
 export async function FeatureFlagCta() {
-  const text = await getFeatureFlag('home_page_button')
+  const text = await getFeatureFlag('home_page_button');
 
   return (
     <a

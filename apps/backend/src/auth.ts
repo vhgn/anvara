@@ -6,17 +6,17 @@ import { prisma } from './db.js';
 
 export type User =
   | {
-    id: string;
-    email: string;
-    role: 'SPONSOR';
-    sponsorId: string;
-  }
+      id: string;
+      email: string;
+      role: 'SPONSOR';
+      sponsorId: string;
+    }
   | {
-    id: string;
-    email: string;
-    role: 'PUBLISHER';
-    publisherId: string;
-  };
+      id: string;
+      email: string;
+      role: 'PUBLISHER';
+      publisherId: string;
+    };
 
 type Role = User['role'];
 type UserForRole<TRole extends Role> = Extract<User, { role: TRole }>;
@@ -59,7 +59,7 @@ export const authMiddleware: RequestHandler<
     }
     next();
   });
-}
+};
 export const optionalAuthMiddleware: RequestHandler<
   Record<string, string>,
   unknown,
@@ -115,7 +115,7 @@ export function roleMiddleware<TRole extends Role>(
   role: TRole
 ): RequestHandler<Record<string, string>, unknown, unknown, unknown, AuthenticatedLocals<TRole>> {
   return (_req, res, next): void => {
-    const locals = res.locals
+    const locals = res.locals;
 
     if (!locals.user || locals.user.role !== role) {
       res.status(403).json({ error: 'Insufficient permissions' });
