@@ -65,6 +65,17 @@ describe('Auth API', () => {
     expect(res.body).toEqual({ error: 'Role not identified' });
   });
 
+  it('rejects /me when user has conflicting roles', async () => {
+    getSession.mockResolvedValue({ user: { id: 'user-1', email: 'a@b.com' } });
+    sponsorFindUnique.mockResolvedValue({ id: 'sponsor-1', name: 'Sponsor' });
+    publisherFindUnique.mockResolvedValue({ id: 'publisher-1', name: 'Publisher' });
+
+    const res = await request(app).get('/api/auth/me');
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'Ambiguous user role' });
+  });
+
   it('returns sponsor user from /me', async () => {
     getSession.mockResolvedValue({ user: { id: 'user-1', email: 'sponsor@example.com' } });
     sponsorFindUnique.mockResolvedValue({ id: 'sponsor-1', name: 'Sponsor' });

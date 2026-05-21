@@ -29,11 +29,25 @@ type AuthenticatedLocals<TRole extends Role> = {
   user: UserForRole<TRole>;
 };
 
+function getBetterAuthSecret(): string {
+  const secret = process.env.BETTER_AUTH_SECRET;
+
+  if (secret) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+    return 'fallback-secret-for-dev';
+  }
+
+  throw new Error('BETTER_AUTH_SECRET must be set outside development and test environments');
+}
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
-  secret: process.env.BETTER_AUTH_SECRET || 'fallback-secret-for-dev',
+  secret: getBetterAuthSecret(),
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:4291',
   emailAndPassword: {
     enabled: true,
@@ -88,6 +102,12 @@ export const optionalAuthMiddleware: RequestHandler<
       select: { id: true, name: true },
     }),
   ]);
+
+  if (sponsor && publisher) {
+    console.warn('Ambiguous user role', userId);
+    res.status(403).json({ error: 'Ambiguous user role' });
+    return;
+  }
 
   if (sponsor) {
     res.locals.user = {
