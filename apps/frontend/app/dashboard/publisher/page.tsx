@@ -11,7 +11,7 @@ export default async function PublisherDashboard() {
   }
 
   // Verify user has 'publisher' role
-  const roleData = await getUserRole(session.user.id);
+  const roleData = await getUserRole();
   if (roleData.role !== 'publisher') {
     redirect('/');
   }

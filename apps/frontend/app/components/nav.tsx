@@ -10,8 +10,8 @@ export function Nav() {
   const user = session?.user;
   const { data: roleData } = useQuery({
     queryKey: ['user-role', user?.id],
-    queryFn: () => getUserRole(user!.id),
-    enabled: Boolean(user?.id),
+    queryFn: () => getUserRole(),
+    enabled: Boolean(user),
   });
   const role = roleData?.role ?? null;
 

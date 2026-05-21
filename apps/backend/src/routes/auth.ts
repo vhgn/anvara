@@ -25,11 +25,11 @@ router.get('/me', authMiddleware, async (_req, res) => {
 
 // GET /api/auth/role/:userId - Get user role based on Sponsor/Publisher records
 router.get(
-  '/role/:userId',
-  validate({ params: z.object({ userId: z.string() }) }),
-  async (req, res) => {
+  '/role',
+  authMiddleware,
+  async (_req, res) => {
     try {
-      const { userId } = req.params;
+      const userId = res.locals.user.id
 
       // Check if user is a sponsor
       const sponsor = await prisma.sponsor.findUnique({

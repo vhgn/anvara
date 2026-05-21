@@ -146,9 +146,9 @@ export const getFeatureFlag = (key: string) =>
   api<{ value: string }>(`/api/feature-flags/${key}`).then(({ value }) => value);
 
 // User's role
-export async function getUserRole(userId: string): Promise<RoleData> {
+export async function getUserRole(): Promise<RoleData> {
   try {
-    return await api<RoleData>(`/api/auth/role/${userId}`, {
+    return await api<RoleData>(`/api/auth/role`, {
       cache: 'no-store', // Always fetch fresh role data
     });
   } catch {

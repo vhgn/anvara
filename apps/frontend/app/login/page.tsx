@@ -34,9 +34,9 @@ export default function LoginPage() {
         onSuccess: async (ctx) => {
           // Fetch user role to determine redirect
           try {
-            const userId = ctx.data?.user?.id;
-            if (userId) {
-              const roleData = await getUserRole(userId);
+            const user = ctx.data?.user;
+            if (user) {
+              const roleData = await getUserRole();
               if (roleData.role === 'sponsor') {
                 router.push('/dashboard/sponsor');
               } else if (roleData.role === 'publisher') {

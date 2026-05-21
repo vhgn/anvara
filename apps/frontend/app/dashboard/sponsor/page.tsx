@@ -12,7 +12,7 @@ export default async function SponsorDashboard() {
   }
 
   // Verify user has 'sponsor' role
-  const roleData = await getUserRole(session.user.id);
+  const roleData = await getUserRole();
   if (roleData.role !== 'sponsor' || !roleData.sponsorId) {
     redirect('/');
   }

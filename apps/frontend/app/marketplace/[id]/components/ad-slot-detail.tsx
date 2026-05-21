@@ -37,8 +37,8 @@ export function AdSlotDetail({ id }: Props) {
 
   const { data: roleInfo, isLoading: roleLoading } = useQuery({
     queryKey: ['user-role', user?.id],
-    queryFn: () => getUserRole(user!.id),
-    enabled: Boolean(user?.id),
+    queryFn: () => getUserRole(),
+    enabled: Boolean(user),
   });
 
   const bookMutation = useMutation({
