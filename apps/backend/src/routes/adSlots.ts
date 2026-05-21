@@ -213,10 +213,10 @@ router.post(
       const { id } = req.params;
       const { message } = req.body;
 
-      // Check if slot exists and is available
+      // Check if slot exists before attempting the atomic availability update.
       const adSlot = await prisma.adSlot.findUnique({
         where: { id },
-        include: { publisher: true },
+        select: { id: true },
       });
 
       if (!adSlot) {
@@ -224,15 +224,18 @@ router.post(
         return;
       }
 
-      if (!adSlot.isAvailable) {
-        res.status(400).json({ error: 'Ad slot is no longer available' });
+      const updateResult = await prisma.adSlot.updateMany({
+        where: { id, isAvailable: true },
+        data: { isAvailable: false },
+      });
+
+      if (updateResult.count === 0) {
+        res.status(409).json({ error: 'Ad slot is no longer available' });
         return;
       }
 
-      // Mark slot as unavailable
-      const updatedSlot = await prisma.adSlot.update({
+      const updatedSlot = await prisma.adSlot.findUniqueOrThrow({
         where: { id },
-        data: { isAvailable: false },
         include: {
           publisher: { select: { id: true, name: true } },
         },
