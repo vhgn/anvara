@@ -1,6 +1,5 @@
 'use server';
-import { cookies, headers } from 'next/headers';
-import type { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
+import { headers } from 'next/headers';
 
 export async function getExtraHeaders() {
   let extraHeaders: Record<string, string> = {};

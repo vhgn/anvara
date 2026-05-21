@@ -1,3 +1,10 @@
+'use client';
+
+import { useActionState, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useFormStatus } from 'react-dom';
+import { deleteCampaignAction, updateCampaignAction, type CampaignActionState } from '../actions';
+import { CampaignForm } from './campaign-form';
 import type { CampaignListItem } from '@/lib/types';
 
 interface CampaignCardProps {
@@ -11,9 +18,82 @@ const statusColors: Record<string, string> = {
   COMPLETED: 'bg-blue-100 text-blue-700',
 };
 
+const initialDeleteState: CampaignActionState = {};
+
+function DeleteButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="rounded border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {pending ? 'Deleting...' : 'Delete'}
+    </button>
+  );
+}
+
+function EditCampaignDialog(props: { campaign: CampaignListItem; onClose: () => void }) {
+  const router = useRouter();
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={`edit-campaign-${props.campaign.id}`}
+      onClick={props.onClose}
+    >
+      <div
+        className="mt-10 w-full max-w-3xl rounded-lg border border-[--color-border] p-4 text-[--color-foreground] shadow-xl"
+        style={{ backgroundColor: 'var(--color-background)' }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <h2 id={`edit-campaign-${props.campaign.id}`} className="text-lg font-semibold">
+            Edit campaign
+          </h2>
+          <button
+            type="button"
+            onClick={props.onClose}
+            className="rounded border border-[--color-border] px-3 py-1.5 text-sm font-medium"
+          >
+            Close
+          </button>
+        </div>
+
+        <CampaignForm
+          action={updateCampaignAction.bind(null, props.campaign.id)}
+          sponsorId={props.campaign.sponsorId}
+          campaign={props.campaign}
+          includeStatus
+          submitLabel="Save changes"
+          pendingLabel="Saving..."
+          onCancel={props.onClose}
+          onSuccess={() => {
+            props.onClose();
+            router.refresh();
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function CampaignCard({ campaign }: CampaignCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const router = useRouter();
+  const deleteAction = deleteCampaignAction.bind(null, campaign.id);
+  const [deleteState, formAction] = useActionState(deleteAction, initialDeleteState);
   const progress =
     campaign.budget > 0 ? (Number(campaign.spent) / Number(campaign.budget)) * 100 : 0;
+
+  useEffect(() => {
+    if (deleteState.success) {
+      router.refresh();
+    }
+  }, [deleteState.success, router]);
 
   return (
     <div className="rounded-lg border border-[--color-border] p-4">
@@ -50,7 +130,32 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
         {new Date(campaign.endDate).toLocaleDateString()}
       </div>
 
-      {/* TODO: Add edit/view buttons */}
+      {deleteState.error && <p className="mt-3 text-sm text-red-600">{deleteState.error}</p>}
+
+      {deleteState.message && <p className="mt-3 text-sm text-green-700">{deleteState.message}</p>}
+
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className="rounded border border-[--color-border] px-3 py-1.5 text-sm font-medium"
+        >
+          Edit
+        </button>
+
+        <form
+          action={formAction}
+          onSubmit={(event) => {
+            if (!window.confirm(`Delete "${campaign.name}"?`)) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <DeleteButton />
+        </form>
+      </div>
+
+      {isEditing && <EditCampaignDialog campaign={campaign} onClose={() => setIsEditing(false)} />}
     </div>
   );
 }
