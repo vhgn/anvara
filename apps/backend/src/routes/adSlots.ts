@@ -7,6 +7,55 @@ import { authMiddleware, roleMiddleware } from '../auth.js';
 
 const router: IRouter = Router();
 
+const adSlotMoneySchema = z.number().positive();
+const adSlotDimensionSchema = z.number().int().positive();
+const adSlotCreateSchema = AdSlotInputSchema.pick({
+  name: true,
+  description: true,
+  type: true,
+  position: true,
+  width: true,
+  height: true,
+  basePrice: true,
+  cpmFloor: true,
+  isAvailable: true,
+  publisherId: true,
+})
+  .extend({
+    basePrice: adSlotMoneySchema,
+    cpmFloor: adSlotMoneySchema.optional().nullable(),
+    width: adSlotDimensionSchema.optional().nullable(),
+    height: adSlotDimensionSchema.optional().nullable(),
+  })
+  .partial({
+    description: true,
+    position: true,
+    width: true,
+    height: true,
+    cpmFloor: true,
+    isAvailable: true,
+  });
+
+const adSlotUpdateSchema = AdSlotInputSchema.pick({
+  name: true,
+  description: true,
+  type: true,
+  position: true,
+  width: true,
+  height: true,
+  basePrice: true,
+  cpmFloor: true,
+  isAvailable: true,
+})
+  .partial()
+  .extend({
+    type: AdSlotTypeSchema.optional(),
+    basePrice: adSlotMoneySchema.optional(),
+    cpmFloor: adSlotMoneySchema.optional().nullable(),
+    width: adSlotDimensionSchema.optional().nullable(),
+    height: adSlotDimensionSchema.optional().nullable(),
+  });
+
 // GET /api/ad-slots - List available ad slots
 router.get(
   '/',
@@ -89,29 +138,7 @@ router.post(
   authMiddleware,
   roleMiddleware('PUBLISHER'),
   validate({
-    body: AdSlotInputSchema.pick({
-      name: true,
-      description: true,
-      type: true,
-      position: true,
-      width: true,
-      height: true,
-      basePrice: true,
-      cpmFloor: true,
-      isAvailable: true,
-      publisherId: true,
-    })
-      .extend({
-        basePrice: AdSlotInputSchema.shape.basePrice.positive(),
-      })
-      .partial({
-        description: true,
-        position: true,
-        width: true,
-        height: true,
-        cpmFloor: true,
-        isAvailable: true,
-      }),
+    body: adSlotCreateSchema,
   }),
   async (req, res) => {
     try {
@@ -255,22 +282,7 @@ router.put(
   roleMiddleware('PUBLISHER'),
   validate({
     params: z.object({ id: z.string() }),
-    body: AdSlotInputSchema.pick({
-      name: true,
-      description: true,
-      type: true,
-      position: true,
-      width: true,
-      height: true,
-      basePrice: true,
-      cpmFloor: true,
-      isAvailable: true,
-    })
-      .partial()
-      .extend({
-        type: AdSlotTypeSchema.optional(),
-        basePrice: AdSlotInputSchema.shape.basePrice.positive().optional(),
-      }),
+    body: adSlotUpdateSchema,
   }),
   async (req, res) => {
     try {

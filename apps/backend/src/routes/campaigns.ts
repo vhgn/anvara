@@ -7,6 +7,64 @@ import { authMiddleware, roleMiddleware } from '../auth.js';
 
 const router: IRouter = Router();
 
+const campaignMoneySchema = z.number().positive();
+const campaignCreateSchema = CampaignInputSchema.pick({
+  name: true,
+  description: true,
+  budget: true,
+  cpmRate: true,
+  cpcRate: true,
+  targetRegions: true,
+  sponsorId: true,
+})
+  .extend({
+    budget: campaignMoneySchema,
+    cpmRate: campaignMoneySchema.optional().nullable(),
+    cpcRate: campaignMoneySchema.optional().nullable(),
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date(),
+    targetCategories: CampaignInputSchema.shape.targetCategories.default([]),
+    targetRegions: CampaignInputSchema.shape.targetRegions.default([]),
+  })
+  .superRefine(({ startDate, endDate }, ctx) => {
+    if (endDate <= startDate) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['endDate'],
+        message: 'endDate must be after startDate',
+      });
+    }
+  });
+
+const campaignUpdateSchema = CampaignInputSchema.pick({
+  name: true,
+  description: true,
+  budget: true,
+  cpmRate: true,
+  cpcRate: true,
+  targetCategories: true,
+  targetRegions: true,
+  status: true,
+})
+  .partial()
+  .extend({
+    budget: campaignMoneySchema.optional(),
+    cpmRate: campaignMoneySchema.optional().nullable(),
+    cpcRate: campaignMoneySchema.optional().nullable(),
+    startDate: z.coerce.date().optional(),
+    endDate: z.coerce.date().optional(),
+    status: CampaignStatusSchema.optional(),
+  })
+  .superRefine(({ startDate, endDate }, ctx) => {
+    if (startDate && endDate && endDate <= startDate) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['endDate'],
+        message: 'endDate must be after startDate',
+      });
+    }
+  });
+
 // GET /api/campaigns - List all campaigns
 router.get(
   '/',
@@ -94,20 +152,7 @@ router.post(
   authMiddleware,
   roleMiddleware('SPONSOR'),
   validate({
-    body: CampaignInputSchema.pick({
-      name: true,
-      description: true,
-      budget: true,
-      cpmRate: true,
-      cpcRate: true,
-      targetRegions: true,
-      sponsorId: true,
-    }).extend({
-      startDate: z.coerce.date(),
-      endDate: z.coerce.date(),
-      targetCategories: CampaignInputSchema.shape.targetCategories.default([]),
-      targetRegions: CampaignInputSchema.shape.targetRegions.default([]),
-    }),
+    body: campaignCreateSchema,
   }),
   async (req, res) => {
     try {
@@ -164,22 +209,7 @@ router.put(
   roleMiddleware('SPONSOR'),
   validate({
     params: z.object({ id: z.string() }),
-    body: CampaignInputSchema.pick({
-      name: true,
-      description: true,
-      budget: true,
-      cpmRate: true,
-      cpcRate: true,
-      targetCategories: true,
-      targetRegions: true,
-      status: true,
-    })
-      .partial()
-      .extend({
-        startDate: z.coerce.date().optional(),
-        endDate: z.coerce.date().optional(),
-        status: CampaignStatusSchema.optional(),
-      }),
+    body: campaignUpdateSchema,
   }),
   async (req, res) => {
     try {
