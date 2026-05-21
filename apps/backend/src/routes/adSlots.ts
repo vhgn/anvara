@@ -166,14 +166,15 @@ router.post(
 router.post(
   '/:id/book',
   authMiddleware,
+  roleMiddleware('SPONSOR'),
   validate({
     params: z.object({ id: z.string() }),
-    body: z.object({ sponsorId: z.string(), message: z.string().optional() }),
+    body: z.object({ message: z.string().optional() }),
   }),
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { sponsorId, message } = req.body;
+      const { message } = req.body;
 
       // Check if slot exists and is available
       const adSlot = await prisma.adSlot.findUnique({
@@ -202,7 +203,9 @@ router.post(
 
       // In a real app, you'd create a Placement record here
       // For now, we just mark it as booked
-      console.log(`Ad slot ${id} booked by sponsor ${sponsorId}. Message: ${message || 'None'}`);
+      console.log(
+        `Ad slot ${id} booked by sponsor ${res.locals.user.sponsorId}. Message: ${message || 'None'}`
+      );
 
       res.json({
         success: true,

@@ -265,7 +265,6 @@ export type PlacementCreateResponse = Placement & {
 };
 
 export interface AdSlotBookingInput {
-  sponsorId: string;
   message?: string;
 }
 

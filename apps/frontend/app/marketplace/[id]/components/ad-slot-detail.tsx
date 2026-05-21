@@ -48,7 +48,6 @@ export function AdSlotDetail({ id }: Props) {
       }
 
       await bookAdSlot(adSlot.id, {
-        sponsorId: roleInfo.sponsorId,
         message: message || undefined,
       });
 
