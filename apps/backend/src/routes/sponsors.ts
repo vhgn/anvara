@@ -25,35 +25,37 @@ router.get('/', async (_req, res) => {
 });
 
 // GET /api/sponsors/:id - Get single sponsor with campaigns
-router.get('/:id', validate({ params: z.object({ id: z.string() }) }), async (req, res) => {
-  try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const sponsor = await prisma.sponsor.findUnique({
-      where: { id },
-      include: {
-        campaigns: {
-          include: {
-            _count: { select: { placements: true } },
-          },
-        },
-        payments: {
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-        },
-      },
-    });
-
-    if (!sponsor) {
-      res.status(404).json({ error: 'Sponsor not found' });
-      return;
-    }
-
-    res.json(sponsor);
-  } catch (error) {
-    console.error('Error fetching sponsor:', error);
-    res.status(500).json({ error: 'Failed to fetch sponsor' });
-  }
-});
+// TODO: understand requirements behind sponsor visibility
+// This is now unused, so I am unsure where it will be used
+// router.get('/:id', validate({ params: z.object({ id: z.string() }) }), async (req, res) => {
+//   try {
+//     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+//     const sponsor = await prisma.sponsor.findUnique({
+//       where: { id },
+//       include: {
+//         campaigns: {
+//           include: {
+//             _count: { select: { placements: true } },
+//           },
+//         },
+//         payments: {
+//           orderBy: { createdAt: 'desc' },
+//           take: 5,
+//         },
+//       },
+//     });
+//
+//     if (!sponsor) {
+//       res.status(404).json({ error: 'Sponsor not found' });
+//       return;
+//     }
+//
+//     res.json(sponsor);
+//   } catch (error) {
+//     console.error('Error fetching sponsor:', error);
+//     res.status(500).json({ error: 'Failed to fetch sponsor' });
+//   }
+// });
 
 // POST /api/sponsors - Create new sponsor
 router.post(
