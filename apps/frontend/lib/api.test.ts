@@ -21,10 +21,13 @@ describe('placement API errors', () => {
 
   it('surfaces backend placement authorization errors', async () => {
     vi.mocked(fetch).mockResolvedValue(
-      new Response(JSON.stringify({ error: 'Cannot create placement for another sponsor campaign' }), {
-        headers: { 'Content-Type': 'application/json' },
-        status: 403,
-      })
+      new Response(
+        JSON.stringify({ error: 'Cannot create placement for another sponsor campaign' }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          status: 403,
+        }
+      )
     );
 
     await expect(

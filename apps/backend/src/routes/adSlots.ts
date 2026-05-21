@@ -94,53 +94,49 @@ router.get(
 );
 
 // GET /api/ad-slots/:id - Get single ad slot with details
-router.get(
-  '/:id',
-  validate({ params: z.object({ id: z.string() }) }),
-  async (req, res) => {
-    try {
-      const { id } = req.params;
+router.get('/:id', validate({ params: z.object({ id: z.string() }) }), async (req, res) => {
+  try {
+    const { id } = req.params;
 
-      const adSlot = await prisma.adSlot.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          type: true,
-          position: true,
-          width: true,
-          height: true,
-          basePrice: true,
-          cpmFloor: true,
-          isAvailable: true,
-          createdAt: true,
-          updatedAt: true,
-          publisherId: true,
-          publisher: {
-            select: {
-              id: true,
-              name: true,
-              category: true,
-              monthlyViews: true,
-              website: true,
-            },
+    const adSlot = await prisma.adSlot.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        type: true,
+        position: true,
+        width: true,
+        height: true,
+        basePrice: true,
+        cpmFloor: true,
+        isAvailable: true,
+        createdAt: true,
+        updatedAt: true,
+        publisherId: true,
+        publisher: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            monthlyViews: true,
+            website: true,
           },
         },
-      });
+      },
+    });
 
-      if (!adSlot) {
-        res.status(404).json({ error: 'Ad slot not found' });
-        return;
-      }
-
-      res.json(adSlot);
-    } catch (error) {
-      console.error('Error fetching ad slot:', error);
-      res.status(500).json({ error: 'Failed to fetch ad slot' });
+    if (!adSlot) {
+      res.status(404).json({ error: 'Ad slot not found' });
+      return;
     }
+
+    res.json(adSlot);
+  } catch (error) {
+    console.error('Error fetching ad slot:', error);
+    res.status(500).json({ error: 'Failed to fetch ad slot' });
   }
-);
+});
 
 // POST /api/ad-slots - Create new ad slot
 router.post(

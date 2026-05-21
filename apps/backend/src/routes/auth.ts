@@ -14,43 +14,39 @@ router.get('/me', authMiddleware, async (_req, res) => {
 });
 
 // GET /api/auth/role/:userId - Get user role based on Sponsor/Publisher records
-router.get(
-  '/role',
-  authMiddleware,
-  async (_req, res) => {
-    try {
-      const userId = res.locals.user.id
+router.get('/role', authMiddleware, async (_req, res) => {
+  try {
+    const userId = res.locals.user.id;
 
-      // Check if user is a sponsor
-      const sponsor = await prisma.sponsor.findUnique({
-        where: { userId },
-        select: { id: true, name: true },
-      });
+    // Check if user is a sponsor
+    const sponsor = await prisma.sponsor.findUnique({
+      where: { userId },
+      select: { id: true, name: true },
+    });
 
-      if (sponsor) {
-        res.json({ role: 'sponsor', sponsorId: sponsor.id, name: sponsor.name });
-        return;
-      }
-
-      // Check if user is a publisher
-      const publisher = await prisma.publisher.findUnique({
-        where: { userId },
-        select: { id: true, name: true },
-      });
-
-      if (publisher) {
-        res.json({ role: 'publisher', publisherId: publisher.id, name: publisher.name });
-        return;
-      }
-
-      // User has no role assigned
-      res.json({ role: null });
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-      res.status(500).json({ error: 'Failed to fetch user role' });
+    if (sponsor) {
+      res.json({ role: 'sponsor', sponsorId: sponsor.id, name: sponsor.name });
+      return;
     }
+
+    // Check if user is a publisher
+    const publisher = await prisma.publisher.findUnique({
+      where: { userId },
+      select: { id: true, name: true },
+    });
+
+    if (publisher) {
+      res.json({ role: 'publisher', publisherId: publisher.id, name: publisher.name });
+      return;
+    }
+
+    // User has no role assigned
+    res.json({ role: null });
+  } catch (error) {
+    console.error('Error fetching user role:', error);
+    res.status(500).json({ error: 'Failed to fetch user role' });
   }
-);
+});
 
 router.all('/*splat', toNodeHandler(auth));
 

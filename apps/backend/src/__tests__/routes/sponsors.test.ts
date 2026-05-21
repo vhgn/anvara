@@ -82,9 +82,7 @@ describe('Sponsors API', () => {
 
   it('returns a conflict when the authenticated user already has a sponsor', async () => {
     getSession.mockResolvedValue({ user: { id: 'user-1', email: 'owner@example.com' } });
-    sponsorFindUnique
-      .mockResolvedValueOnce({ id: 'existing-sponsor' })
-      .mockResolvedValueOnce(null);
+    sponsorFindUnique.mockResolvedValueOnce({ id: 'existing-sponsor' }).mockResolvedValueOnce(null);
     publisherFindUnique.mockResolvedValue(null);
 
     const res = await request(app).post('/api/sponsors').send({ name: 'Acme' });
