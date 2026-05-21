@@ -250,10 +250,27 @@ router.post(
 router.post(
   '/:id/unbook',
   authMiddleware,
+  roleMiddleware('PUBLISHER'),
   validate({ params: z.object({ id: z.string() }) }),
   async (req, res) => {
     try {
       const { id } = req.params;
+      const user = res.locals.user;
+
+      const adSlot = await prisma.adSlot.findUnique({
+        where: { id },
+        select: { id: true, publisherId: true },
+      });
+
+      if (!adSlot) {
+        res.status(404).json({ error: 'Ad slot not found' });
+        return;
+      }
+
+      if (adSlot.publisherId !== user.publisherId) {
+        res.status(403).json({ error: 'Cannot unbook another publisher ad slot' });
+        return;
+      }
 
       const updatedSlot = await prisma.adSlot.update({
         where: { id },
