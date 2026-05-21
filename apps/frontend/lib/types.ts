@@ -215,12 +215,7 @@ export type AdSlotListItem = AdSlot & {
 };
 
 export type AdSlotDetail = AdSlot & {
-  publisher: Publisher;
-  placements: Array<
-    Placement & {
-      campaign: Pick<Campaign, 'id' | 'name' | 'status'>;
-    }
-  >;
+  publisher: Pick<Publisher, 'id' | 'name' | 'category' | 'monthlyViews' | 'website'>;
 };
 
 export type AdSlotCreateInput = Pick<AdSlot, 'name' | 'type' | 'basePrice' | 'publisherId'> &
