@@ -61,6 +61,7 @@ export function CampaignForm(props: CampaignFormProps) {
   const [state, formAction] = useFormState(props.action, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const { campaign, includeStatus = false, onSuccess } = props;
+  const values = state.values;
 
   useEffect(() => {
     if (state.success) {
@@ -94,7 +95,7 @@ export function CampaignForm(props: CampaignFormProps) {
           <span className="font-medium">Name</span>
           <input
             name="name"
-            defaultValue={campaign?.name}
+            defaultValue={values?.name ?? campaign?.name}
             className="w-full rounded border border-[--color-border] bg-transparent px-3 py-2"
           />
           <FieldError message={state.fieldErrors?.name} />
@@ -107,7 +108,7 @@ export function CampaignForm(props: CampaignFormProps) {
             type="number"
             min="0"
             step="0.01"
-            defaultValue={campaign?.budget}
+            defaultValue={values?.budget ?? campaign?.budget}
             className="w-full rounded border border-[--color-border] bg-transparent px-3 py-2"
           />
           <FieldError message={state.fieldErrors?.budget} />
@@ -118,7 +119,7 @@ export function CampaignForm(props: CampaignFormProps) {
         <span className="font-medium">Description</span>
         <textarea
           name="description"
-          defaultValue={campaign?.description ?? ''}
+          defaultValue={values?.description ?? campaign?.description ?? ''}
           rows={3}
           className="w-full rounded border border-[--color-border] bg-transparent px-3 py-2"
         />
@@ -130,7 +131,7 @@ export function CampaignForm(props: CampaignFormProps) {
           <input
             name="startDate"
             type="date"
-            defaultValue={toDateInputValue(campaign?.startDate)}
+            defaultValue={values?.startDate ?? toDateInputValue(campaign?.startDate)}
             className="w-full rounded border border-[--color-border] bg-transparent px-3 py-2"
           />
           <FieldError message={state.fieldErrors?.startDate} />
@@ -141,7 +142,7 @@ export function CampaignForm(props: CampaignFormProps) {
           <input
             name="endDate"
             type="date"
-            defaultValue={toDateInputValue(campaign?.endDate)}
+            defaultValue={values?.endDate ?? toDateInputValue(campaign?.endDate)}
             className="w-full rounded border border-[--color-border] bg-transparent px-3 py-2"
           />
           <FieldError message={state.fieldErrors?.endDate} />
@@ -156,7 +157,7 @@ export function CampaignForm(props: CampaignFormProps) {
             type="number"
             min="0"
             step="0.01"
-            defaultValue={campaign?.cpmRate ?? ''}
+            defaultValue={values?.cpmRate ?? campaign?.cpmRate ?? ''}
             className="w-full rounded border border-[--color-border] bg-transparent px-3 py-2"
           />
           <FieldError message={state.fieldErrors?.cpmRate} />
@@ -169,7 +170,7 @@ export function CampaignForm(props: CampaignFormProps) {
             type="number"
             min="0"
             step="0.01"
-            defaultValue={campaign?.cpcRate ?? ''}
+            defaultValue={values?.cpcRate ?? campaign?.cpcRate ?? ''}
             className="w-full rounded border border-[--color-border] bg-transparent px-3 py-2"
           />
           <FieldError message={state.fieldErrors?.cpcRate} />
@@ -181,7 +182,7 @@ export function CampaignForm(props: CampaignFormProps) {
           <span className="font-medium">Target categories</span>
           <input
             name="targetCategories"
-            defaultValue={campaign?.targetCategories.join(', ') ?? ''}
+            defaultValue={values?.targetCategories ?? campaign?.targetCategories.join(', ') ?? ''}
             className="w-full rounded border border-[--color-border] bg-transparent px-3 py-2"
           />
         </label>
@@ -190,7 +191,7 @@ export function CampaignForm(props: CampaignFormProps) {
           <span className="font-medium">Target regions</span>
           <input
             name="targetRegions"
-            defaultValue={campaign?.targetRegions.join(', ') ?? ''}
+            defaultValue={values?.targetRegions ?? campaign?.targetRegions.join(', ') ?? ''}
             className="w-full rounded border border-[--color-border] bg-transparent px-3 py-2"
           />
         </label>
@@ -201,7 +202,7 @@ export function CampaignForm(props: CampaignFormProps) {
           <span className="font-medium">Status</span>
           <select
             name="status"
-            defaultValue={campaign?.status ?? 'DRAFT'}
+            defaultValue={values?.status ?? campaign?.status ?? 'DRAFT'}
             className="w-full rounded border border-[--color-border] bg-[--color-background] px-3 py-2"
           >
             {campaignStatuses.map((status) => (

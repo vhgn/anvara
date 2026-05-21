@@ -9,6 +9,21 @@ export type CampaignActionState = {
   message?: string;
   error?: string;
   fieldErrors?: Record<string, string>;
+  values?: CampaignFormValues;
+};
+
+export type CampaignFormValues = {
+  name: string;
+  sponsorId: string;
+  budget: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  cpmRate: string;
+  cpcRate: string;
+  targetCategories: string;
+  targetRegions: string;
+  status: string;
 };
 
 const dashboardPath = '/dashboard/sponsor';
@@ -37,6 +52,22 @@ function parseList(formData: FormData, key: string) {
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
+}
+
+function getCampaignFormValues(formData: FormData): CampaignFormValues {
+  return {
+    name: getString(formData, 'name'),
+    sponsorId: getString(formData, 'sponsorId'),
+    budget: getString(formData, 'budget'),
+    description: getString(formData, 'description'),
+    startDate: getString(formData, 'startDate'),
+    endDate: getString(formData, 'endDate'),
+    cpmRate: getString(formData, 'cpmRate'),
+    cpcRate: getString(formData, 'cpcRate'),
+    targetCategories: getString(formData, 'targetCategories'),
+    targetRegions: getString(formData, 'targetRegions'),
+    status: getString(formData, 'status'),
+  };
 }
 
 function positiveNumber(formData: FormData, key: string, label: string) {
@@ -145,10 +176,15 @@ export async function createCampaignAction(
   _prevState: CampaignActionState,
   formData: FormData
 ): Promise<CampaignActionState> {
+  const values = getCampaignFormValues(formData);
   const validation = validateCampaign(formData, false);
 
   if (validation.fieldErrors) {
-    return { fieldErrors: validation.fieldErrors, error: 'Please fix the highlighted fields.' };
+    return {
+      fieldErrors: validation.fieldErrors,
+      values,
+      error: 'Please fix the highlighted fields.',
+    };
   }
 
   try {
@@ -156,7 +192,7 @@ export async function createCampaignAction(
     revalidatePath(dashboardPath);
     return { success: true, message: 'Campaign created.' };
   } catch (error) {
-    return { error: getErrorMessage(error, 'Failed to create campaign') };
+    return { values, error: getErrorMessage(error, 'Failed to create campaign') };
   }
 }
 
@@ -165,10 +201,15 @@ export async function updateCampaignAction(
   _prevState: CampaignActionState,
   formData: FormData
 ): Promise<CampaignActionState> {
+  const formValues = getCampaignFormValues(formData);
   const validation = validateCampaign(formData, true);
 
   if (validation.fieldErrors) {
-    return { fieldErrors: validation.fieldErrors, error: 'Please fix the highlighted fields.' };
+    return {
+      fieldErrors: validation.fieldErrors,
+      values: formValues,
+      error: 'Please fix the highlighted fields.',
+    };
   }
 
   const values = validation.values!;
@@ -190,7 +231,7 @@ export async function updateCampaignAction(
     revalidatePath(dashboardPath);
     return { success: true, message: 'Campaign updated.' };
   } catch (error) {
-    return { error: getErrorMessage(error, 'Failed to update campaign') };
+    return { values: formValues, error: getErrorMessage(error, 'Failed to update campaign') };
   }
 }
 
