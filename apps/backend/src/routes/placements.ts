@@ -3,12 +3,14 @@ import { prisma } from '../db.js';
 import { PlacementInputSchema, PlacementStatusSchema } from '../generated/zod/schemas/index.js';
 import { validate } from '../validate.js';
 import z from 'zod';
+import { authMiddleware, roleMiddleware } from '../auth.js';
 
 const router: IRouter = Router();
 
 // GET /api/placements - List placements
 router.get(
   '/',
+  authMiddleware,
   validate({
     query: z.object({
       campaignId: z.string().optional(),
@@ -19,11 +21,20 @@ router.get(
   async (req, res) => {
     try {
       const { campaignId, publisherId, status } = req.query;
+      const user = res.locals.user;
+
+      if (user.role === 'PUBLISHER' && publisherId && publisherId !== user.publisherId) {
+        res.status(403).json({ error: 'Cannot access placements for another publisher' });
+        return;
+      }
 
       const placements = await prisma.placement.findMany({
         where: {
+          ...(user.role === 'SPONSOR'
+            ? { campaign: { sponsorId: user.sponsorId } }
+            : { publisherId: user.publisherId }),
           ...(campaignId && { campaignId }),
-          ...(publisherId && { publisherId }),
+          ...(publisherId && user.role === 'SPONSOR' && { publisherId }),
           ...(status && {
             status,
           }),
@@ -48,6 +59,8 @@ router.get(
 // POST /api/placements - Create new placement
 router.post(
   '/',
+  authMiddleware,
+  roleMiddleware('SPONSOR'),
   validate({
     body: PlacementInputSchema.pick({
       campaignId: true,
@@ -64,6 +77,7 @@ router.post(
   }),
   async (req, res) => {
     try {
+      const user = res.locals.user;
       const {
         campaignId,
         creativeId,
@@ -74,6 +88,61 @@ router.post(
         startDate,
         endDate,
       } = req.body;
+
+      if (endDate <= startDate) {
+        res.status(400).json({ error: 'Placement end date must be after start date' });
+        return;
+      }
+
+      const [campaign, creative, adSlot] = await Promise.all([
+        prisma.campaign.findUnique({
+          where: { id: campaignId },
+          select: { id: true, sponsorId: true },
+        }),
+        prisma.creative.findUnique({
+          where: { id: creativeId },
+          select: { id: true, campaignId: true },
+        }),
+        prisma.adSlot.findUnique({
+          where: { id: adSlotId },
+          select: { id: true, publisherId: true, isAvailable: true },
+        }),
+      ]);
+
+      if (!campaign) {
+        res.status(404).json({ error: 'Campaign not found' });
+        return;
+      }
+
+      if (campaign.sponsorId !== user.sponsorId) {
+        res.status(403).json({ error: 'Cannot create placement for another sponsor campaign' });
+        return;
+      }
+
+      if (!creative) {
+        res.status(404).json({ error: 'Creative not found' });
+        return;
+      }
+
+      if (creative.campaignId !== campaign.id) {
+        res.status(400).json({ error: 'Creative does not belong to the selected campaign' });
+        return;
+      }
+
+      if (!adSlot) {
+        res.status(404).json({ error: 'Ad slot not found' });
+        return;
+      }
+
+      if (adSlot.publisherId !== publisherId) {
+        res.status(400).json({ error: 'Publisher does not own the selected ad slot' });
+        return;
+      }
+
+      if (!adSlot.isAvailable) {
+        res.status(400).json({ error: 'Ad slot is no longer available' });
+        return;
+      }
 
       const placement = await prisma.placement.create({
         data: {
