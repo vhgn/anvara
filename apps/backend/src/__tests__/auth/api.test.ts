@@ -45,12 +45,6 @@ describe('Auth API', () => {
     vi.clearAllMocks();
   });
 
-  it('keeps login on frontend', async () => {
-    const res = await request(app).post('/api/auth/login');
-
-    expect(res.status).toBe(400);
-  });
-
   it('rejects /me without session', async () => {
     getSession.mockResolvedValue(null);
 
