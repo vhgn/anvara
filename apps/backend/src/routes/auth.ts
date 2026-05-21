@@ -1,22 +1,12 @@
 import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
-import { validate } from '../validate.js';
-import z from 'zod';
 import { auth, authMiddleware } from '../auth.js';
 import { toNodeHandler } from 'better-auth/node';
 
 const router: IRouter = Router();
 
-// NOTE: Authentication is handled by Better Auth on the frontend
+// NOTE: Authentication is handled by Better Auth
 // This route is kept for any backend-specific auth utilities
-
-// POST /api/auth/login - Placeholder (Better Auth handles login via frontend)
-router.post('/login', async (_req, res) => {
-  res.status(400).json({
-    error: 'Use the frontend login at /login instead',
-    hint: 'Better Auth handles authentication via the Next.js frontend',
-  });
-});
 
 // GET /api/auth/me - Get current user (for API clients)
 router.get('/me', authMiddleware, async (_req, res) => {
