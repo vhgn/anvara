@@ -2,9 +2,17 @@ import { Router, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import z from 'zod';
 import { validate } from '../validate.js';
-import { SponsorInputSchema } from '../generated/zod/schemas/index.js';
+import { sessionMiddleware } from '../auth.js';
 
 const router: IRouter = Router();
+
+const SponsorCreateSchema = z.object({
+  name: z.string().min(1),
+  website: z.string().nullable().optional(),
+  logo: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  industry: z.string().nullable().optional(),
+});
 
 // GET /api/sponsors - List all sponsors
 router.get('/', async (_req, res) => {
@@ -60,22 +68,38 @@ router.get('/', async (_req, res) => {
 // POST /api/sponsors - Create new sponsor
 router.post(
   '/',
+  sessionMiddleware,
   validate({
-    body: SponsorInputSchema.pick({
-      name: true,
-      email: true,
-      website: true,
-      logo: true,
-      description: true,
-      industry: true,
-    }),
+    body: SponsorCreateSchema,
   }),
   async (req, res) => {
     try {
-      const { name, email, website, logo, description, industry } = req.body;
+      const { name, website, logo, description, industry } = req.body;
+      const { id: userId, email } = res.locals.sessionUser;
+
+      const [existingSponsor, existingPublisher, existingEmailSponsor] = await Promise.all([
+        prisma.sponsor.findUnique({ where: { userId }, select: { id: true } }),
+        prisma.publisher.findUnique({ where: { userId }, select: { id: true } }),
+        prisma.sponsor.findUnique({ where: { email }, select: { id: true } }),
+      ]);
+
+      if (existingSponsor) {
+        res.status(409).json({ error: 'Sponsor already exists for this user' });
+        return;
+      }
+
+      if (existingPublisher) {
+        res.status(409).json({ error: 'User already has a publisher profile' });
+        return;
+      }
+
+      if (existingEmailSponsor) {
+        res.status(409).json({ error: 'Sponsor already exists for this email' });
+        return;
+      }
 
       const sponsor = await prisma.sponsor.create({
-        data: { name, email, website, logo, description, industry },
+        data: { userId, name, email, website, logo, description, industry },
       });
 
       res.status(201).json(sponsor);

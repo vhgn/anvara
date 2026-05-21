@@ -25,6 +25,13 @@ type AuthLocals = {
   user: User;
 };
 
+type SessionLocals = {
+  sessionUser: {
+    id: string;
+    email: string;
+  };
+};
+
 type AuthenticatedLocals<TRole extends Role> = {
   user: UserForRole<TRole>;
 };
@@ -74,6 +81,31 @@ export const authMiddleware: RequestHandler<
     next();
   });
 };
+
+export const sessionMiddleware: RequestHandler<
+  Record<string, string>,
+  unknown,
+  unknown,
+  unknown,
+  SessionLocals
+> = async (req, res, next) => {
+  const authInfo = await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  });
+
+  if (!authInfo) {
+    res.status(401).json({ error: 'Unauthenticated' });
+    return;
+  }
+
+  res.locals.sessionUser = {
+    id: authInfo.user.id,
+    email: authInfo.user.email,
+  };
+
+  next();
+};
+
 export const optionalAuthMiddleware: RequestHandler<
   Record<string, string>,
   unknown,
